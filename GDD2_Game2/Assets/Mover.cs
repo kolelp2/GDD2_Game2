@@ -1,28 +1,26 @@
 ﻿using UnityEngine;
-using System.Collections;
 
 public class Mover : MonoBehaviour {
-    public float moveSpeed = 0.2f;
+    float maxMoveSpeed = 0.0f;
     Vector2 velocity = new Vector2(0, 0);
-    public Vector2 Velocity
+    void Awake()
     {
-        get
-        {
-            return velocity;
-        }
-        
-        set
-        {
-            velocity = value;
-        }
+        maxMoveSpeed = Random.value * 2.0f + 1.0f;
     }
+
 	// Use this for initialization
 	void Start () {
-	
 	}
 	
 	// Update is called once per frame
 	void Update () {
-        this.transform.position += (new Vector3(velocity.x, velocity.y)) * moveSpeed;
+        Debug.DrawRay(gameObject.transform.position, velocity, Color.red, Time.deltaTime);
+        this.transform.position += (new Vector3(velocity.x, velocity.y)) * Time.deltaTime;
 	}
+
+    public void SetVelocity(Vector2 direction, float speed)
+    {
+        speed = Mathf.Clamp(speed, 0.0f, 1.0f);
+        velocity = direction.normalized * maxMoveSpeed * speed;
+    }
 }

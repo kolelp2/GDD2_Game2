@@ -9,7 +9,10 @@ public class CPManager : MonoBehaviour {
 
     //field of movement vectors
     Vector2[,] vectorField;
-    Vector2 mapSize = new Vector2(20, 20);
+    Vector2 mapSize = new Vector2(100, 100);
+
+    bool recalculateVF = false;
+    public int recalcInterval = 5;
 
     void Awake()
     {
@@ -28,8 +31,19 @@ public class CPManager : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        
-	}
+        //debug lines
+        for (int n = 0; n < vectorField.GetLength(0); n++)
+            for (int c = 0; c < vectorField.GetLength(1); c++)
+                Debug.DrawRay(new Vector3(n, c, 0), (Vector3)vectorField[n, c], Color.green, Time.deltaTime);
+
+        //check for queued VF recalculations at every x frames (where x is recalcInterval)
+        if (recalculateVF && Time.frameCount % recalcInterval == 0)
+        {
+            recalculateVF = false;
+            RecalculateVectorField();
+        }
+        //if(Input.GetMouseButtonDown(0))
+    }
 
     public void AddCP(ControlPoint cp)
     {
@@ -60,7 +74,7 @@ public class CPManager : MonoBehaviour {
                 Vector2 p = new Vector2(row, col);
 
                 //tracks the magnitude of the longest cp vector
-                float longestMagnitude = 0.0f;
+                float longestMagnitudeSqr = 0.0f;
                 //iterate through length of cp list
                 for (int c = 0; c < CPs.Count; c++)
                 {
@@ -71,21 +85,22 @@ public class CPManager : MonoBehaviour {
                     cpVectors[c] = cpPosition - p;
 
                     //check for new longest magnitude
-                    if (cpPosition.sqrMagnitude > longestMagnitude) longestMagnitude = cpPosition.sqrMagnitude;
+                    if (cpPosition.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPosition.sqrMagnitude;
                 }
 
                 //we'll multiply all vectors by a scale factor so that the closest ones matter more
                 //furthest vector is 0, <0,0> is 1
-                float scaleFactor = 1 - (1 / longestMagnitude);
+                //float scaleFactorBase = 1 - (1 / longestMagnitude);
                 Vector2 calculatedVector = new Vector2(0, 0);
 
                 //don't apply scale factor if there's only 1 cp
-                if (cpVectors.Length == 1) calculatedVector = cpVectors[0];
+                if (cpVectors.Length == 1)
+                    calculatedVector = cpVectors[0];
                 //otherwise,
                 else
                     //add all scaled cp vectors
                     foreach (Vector2 v in cpVectors)
-                        calculatedVector += v * scaleFactor;
+                        calculatedVector += v * ((longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude);
 
                 //final vector is the sum normalized
                 vectorField[row, col] = calculatedVector.normalized;           
@@ -117,13 +132,19 @@ public class CPManager : MonoBehaviour {
                 //get the field vector for the current ints
                 Vector2 nearVec = vectorField[n, c];
                 //scale factor, closer is stronger
-                float scaleFactor = Math.Abs(n - pos.x) * Math.Abs(c - pos.y);
+                float scaleFactor = (1 - Math.Abs(n - pos.x)) * (1 - Math.Abs(c - pos.y));
                 //add scaled field vector to return vector
                 returnVector += nearVec * scaleFactor;
+                //Debug.DrawRay(new Vector2(n, c), nearVec * scaleFactor, Color.blue, Time.deltaTime);
             }
         }
 
         //return normalized return vector
         return returnVector.normalized;
+    }
+
+    public void QueueVFRecalculation()
+    {
+        recalculateVF = true;
     }
 }
