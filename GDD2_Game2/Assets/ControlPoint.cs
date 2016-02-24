@@ -4,11 +4,18 @@ using System.Collections;
 public class ControlPoint : MonoBehaviour {
     CPManager cpm;
     bool dragging = false; //is this point being mouse-dragged?
-    public static float drawDepth = -1.0f;
+
+    [SerializeField]
+    static float drawDepth = -1.0f;
+
+    public static float DrawDepth
+    {
+        get { return drawDepth; }
+    }
 
 	// Use this for initialization
 	void Start () {
-        cpm = GameObject.Find("GameManager").GetComponent<CPManager>();
+        cpm = GameObject.Find("Map").GetComponent<CPManager>();
         cpm.AddCP(this);
 	}
 	

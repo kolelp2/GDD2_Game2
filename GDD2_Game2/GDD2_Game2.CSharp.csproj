@@ -64,7 +64,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\CPManager.cs" />
-    <Compile Include="Assets\CPSurface.cs" />
     <Compile Include="Assets\CameraControls.cs" />
     <Compile Include="Assets\ControlPoint.cs" />
     <Compile Include="Assets\GOTracker.cs" />

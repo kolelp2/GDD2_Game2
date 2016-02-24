@@ -8,15 +8,18 @@ public class Zombie : MonoBehaviour {
     GOTracker myGOT;
     Human target = null;
     DateTime lastTargetTime = new DateTime();
-    public float viewDistance = 5.0f;
-    public int chaseTime = 7;
-    public float reach = .1f;
+    [SerializeField]
+    float viewDistance = 5.0f;
+    [SerializeField]
+    int chaseTime = 7;
+    [SerializeField]
+    float reach = .1f;
 	// Use this for initialization
 	void Start () {
         myMover = GetComponent<Mover>();
-        GameObject GM = GameObject.Find("GameManager");
-        myCPM = GM.GetComponent<CPManager>();
-        myGOT = GM.GetComponent<GOTracker>();
+        GameObject map = GameObject.Find("Map");
+        myCPM = map.GetComponent<CPManager>();
+        myGOT = map.GetComponent<GOTracker>();
 	}
 	
 	// Update is called once per frame

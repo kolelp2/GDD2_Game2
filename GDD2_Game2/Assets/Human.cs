@@ -7,8 +7,8 @@ public class Human : MonoBehaviour {
     // Use this for initialization
     void Start () {
         myMover = GetComponent<Mover>();
-        GameObject GM = GameObject.Find("GameManager");
-        myGOT = GM.GetComponent<GOTracker>();
+        GameObject map = GameObject.Find("Map");
+        myGOT = map.GetComponent<GOTracker>();
     }
 	
 	// Update is called once per frame
