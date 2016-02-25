@@ -56,7 +56,7 @@ public class Zombie : MonoBehaviour {
         checkingForTarget = true;
 
         //get nearby game objects from the GO tracker
-        List<MonoBehaviour> nearbyMBs = myGOT.GetObjs(transform.position, viewDistance, typeof(Human));
+        List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, typeof(Human));
 
         //determine how many checks we'll make per rame
         int checksPerFrame = (int)Math.Ceiling(nearbyMBs.Count / (float)targetCheckInterval);

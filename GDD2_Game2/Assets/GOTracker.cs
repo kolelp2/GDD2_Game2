@@ -1,11 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class GOTracker : MonoBehaviour {
-    Dictionary<System.Type, List<MonoBehaviour>> objDictionary = new Dictionary<System.Type, List<MonoBehaviour>>();
+    Dictionary<System.Type, List<MonoBehaviour>[,]> objDictionary = new Dictionary<System.Type, List<MonoBehaviour>[,]>();
+
+    MapInfo mi;
+
+    [SerializeField]
+    int mapPrecision = 1;
+
 	// Use this for initialization
 	void Start () {
-	
+        mi = (MapInfo)gameObject.GetComponent(typeof(MapInfo));
 	}
 	
 	// Update is called once per frame
@@ -13,7 +20,7 @@ public class GOTracker : MonoBehaviour {
 	    
 	}
 
-    public List<MonoBehaviour> GetObjs(Vector2 position, float radius, System.Type type)
+    public List<MonoBehaviour> GetObjsInRange(Vector2 position, float radius, System.Type type)
     {
         if (!objDictionary.ContainsKey(type)) return new List<MonoBehaviour>();
         //return objDictionary[type];
@@ -27,10 +34,10 @@ public class GOTracker : MonoBehaviour {
         return activeAndInRange;
     }
 
-    public void Report(MonoBehaviour mb, System.Type type)
+    public void Report(MonoBehaviour mb, System.Type type, Vector2 worldPos)
     {
         //if the obj dictionary doesn't contain this type yet, add it
-        if (!objDictionary.ContainsKey(type)) objDictionary.Add(type, new List<MonoBehaviour>());
+        if (!objDictionary.ContainsKey(type)) objDictionary.Add(type, new List<MonoBehaviour>[(int)Math.Floor(mi.MapSize.x), (int)Math.Floor(mi.MapSize.y)]);
         //get the set for this type
         List<MonoBehaviour> list = objDictionary[type];
         //add the script to it if it isn't already there
@@ -42,4 +49,6 @@ public class GOTracker : MonoBehaviour {
         //remove the dead thing from the object dictionary
         if (objDictionary.ContainsKey(typeof(T))) objDictionary[typeof(T)].Remove(deadThing);
     }
+
+    //public Vector2 World
 }

@@ -4,13 +4,15 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class CPManager : MonoBehaviour {
+    MapInfo mi;
+
     //list of all active control points
     HashSet<ControlPoint> CPs = new HashSet<ControlPoint>();
 
     //field of movement vectors
     Vector2[,] vectorField;
     Vector2 vfSize;
-    Vector2 mapPos;
+    //Vector2 mapPos;
 
     bool recalculateVF = false;
     [SerializeField]
@@ -25,12 +27,13 @@ public class CPManager : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        mi = (MapInfo)gameObject.GetComponent(typeof(MapInfo));
         //get the map's collider
-        BoxCollider2D mapBox = (BoxCollider2D)GameObject.Find("Map").GetComponent(typeof(BoxCollider2D));
-        vfSize = mapBox.size / vfPrecision; //vf size is the collider's size divided by the precision
+        //BoxCollider2D mapBox = (BoxCollider2D)GameObject.Find("Map").GetComponent(typeof(BoxCollider2D));
+        vfSize = mi.MapSize / vfPrecision; //vf size is the collider's size divided by the precision
         //mapPos is the position of the vf's bottom-left corner in world space
         //the vf is bottom-left anchored, but the collider is center anchored. we have to get the collider's bottom-left corner
-        mapPos = new Vector2(mapBox.transform.position.x - mapBox.size.x / 2, mapBox.transform.position.y - mapBox.size.y / 2);
+        //mapPos = new Vector2(mapBox.transform.position.x - mapBox.size.x / 2, mapBox.transform.position.y - mapBox.size.y / 2);
 
         //change to use precision global, scaled to the map's aspect ratio
         vectorField = new Vector2[(int)vfSize.x, (int)vfSize.y];
@@ -100,7 +103,7 @@ public class CPManager : MonoBehaviour {
                 foreach(ControlPoint cp in cps)
                 {
                     //ControlPoint cp = [c];
-                    Vector2 cpPosition = WorldToVFSpace(new Vector2(cp.transform.position.x, cp.transform.position.y));
+                    Vector2 cpPosition = mi.WorldToGridSpace(new Vector2(cp.transform.position.x, cp.transform.position.y), vfPrecision);
                     //cp vector is vector from position to cp position
                     cpVectors[c] = cpPosition - p;
                     c++;
@@ -137,10 +140,10 @@ public class CPManager : MonoBehaviour {
     public Vector2 GetVectorAtPosition(Vector2 pos)
     {
         //correct for map offset
-        pos = WorldToVFSpace(pos);
+        pos = mi.WorldToGridSpace(pos,vfPrecision);
         //if we're off the map, return normalized vector toward map center
-        if (!IsVFPosWithinVF(pos))
-            return (VFToWorldSpace(new Vector2(vfSize.x / 2, vfSize.y / 2) - pos)).normalized;
+        if (!mi.IsGridPosOnMap(pos, vfPrecision))
+            return (mi.GridToWorldSpace(new Vector2(vfSize.x / 2, vfSize.y / 2) - pos, vfPrecision)).normalized;
 
         Vector2 returnVector = new Vector2(0, 0);
 
@@ -178,52 +181,9 @@ public class CPManager : MonoBehaviour {
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
-        if (IsWorldPosWithinVF(newPos))
+        if (mi.IsWorldPosOnMap(newPos))
             Instantiate(Resources.Load("control point"), newPos, Quaternion.identity);
     }
 
-    //takes a vector representing a point in the world and returns a vector representing the corresponding point in the vector field
-    Vector2 WorldToVFSpace(Vector2 worldPos)
-    {
-        return (worldPos - mapPos) / vfPrecision;
-    }
-
-    //same as above, but from vector field space to world space
-    Vector2 VFToWorldSpace(Vector2 vfPos)
-    {
-        return (vfPos * vfPrecision) + mapPos;
-    }
-
-    //same as WorldToVFSpace, but only affects x and y
-    Vector3 WorldToVFSpace(Vector3 worldPos)
-    {
-        //save Z, transform X and Y
-        float z = worldPos.z;
-        Vector2 conv = WorldToVFSpace((Vector2)worldPos);
-
-        //return new X and Y with old Z
-        return new Vector3(conv.x, conv.y, z);
-    }
-
-    //same as above, but from vf space to world space
-    Vector3 VFToWorldSpace(Vector3 vfPos)
-    {
-        //save Z, transform X and Y
-        float z = vfPos.z;
-        Vector2 conv = VFToWorldSpace((Vector2)vfPos);
-
-        //return new X and Y with old Z
-        return new Vector3(conv.x, conv.y, z);
-    }
-
-    bool IsWorldPosWithinVF(Vector2 worldPos)
-    {
-        worldPos = WorldToVFSpace(worldPos);
-        return !(worldPos.x > vfSize.x - 1 || worldPos.x < 1 || worldPos.y > vfSize.y - 1 || worldPos.y < 1);
-    }
-
-    bool IsVFPosWithinVF(Vector2 vfPos)
-    {
-        return !(vfPos.x > vfSize.x - 1 || vfPos.x < 1 || vfPos.y > vfSize.y - 1 || vfPos.y < 1);
-    }
+    
 }
