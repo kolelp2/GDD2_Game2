@@ -18,8 +18,8 @@ public class Zombie : MonoBehaviour {
 	void Start () {
         myMover = GetComponent<Mover>();
         GameObject map = GameObject.Find("Map");
-        myCPM = map.GetComponent<CPManager>();
-        myGOT = map.GetComponent<GOTracker>();
+        myCPM = (CPManager)map.GetComponent(typeof(CPManager));
+        myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
 	}
 	
 	// Update is called once per frame
@@ -28,25 +28,23 @@ public class Zombie : MonoBehaviour {
         if (target == null || lastTargetTime - DateTime.Now > new TimeSpan(0, 0, chaseTime))
         {
             //get nearby game objects from the GO tracker
-            List<GameObject> nearbyGOs = myGOT.GetObjsWithinRange(transform.position, viewDistance);
+            HashSet<MonoBehaviour> nearbyMBs = myGOT.GetObjsWithinRange(transform.position, viewDistance, typeof(Human));
             Human closestHuman = null;
             float closestHumanDistanceSqr = float.MaxValue;
             //for each GO...
-            foreach (GameObject go in nearbyGOs)
+            foreach (MonoBehaviour go in nearbyMBs)
             {
                 //check if it has a human component
-                Human goHuman = go.GetComponent<Human>();
-                if (goHuman != null)
+                Human goHuman = (Human)go;
+                //if it does, get the distance to it
+                float goHumanDistanceSqr = (transform.position - goHuman.transform.position).sqrMagnitude;
+                //if it's closer than the current closest, make it the new closest
+                if (goHumanDistanceSqr < closestHumanDistanceSqr)
                 {
-                    //if it does, get the distance to it
-                    float goHumanDistanceSqr = (transform.position - goHuman.transform.position).sqrMagnitude;
-                    //if it's closer than the current closest, make it the new closest
-                    if (goHumanDistanceSqr < closestHumanDistanceSqr)
-                    {
-                        closestHuman = goHuman;
-                        closestHumanDistanceSqr = goHumanDistanceSqr;
-                    }
+                    closestHuman = goHuman;
+                    closestHumanDistanceSqr = goHumanDistanceSqr;
                 }
+                
             }
             //closest human is the target. note the time the new target was acquired
             target = closestHuman;
@@ -62,6 +60,6 @@ public class Zombie : MonoBehaviour {
             myMover.SetVelocity(target.transform.position - transform.position, 1);
         }
 
-        myGOT.Report(gameObject);
+        myGOT.Report(this, typeof(Zombie));
     }
 }

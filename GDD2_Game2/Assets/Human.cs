@@ -6,22 +6,27 @@ public class Human : MonoBehaviour {
     GOTracker myGOT;
     // Use this for initialization
     void Start () {
-        myMover = GetComponent<Mover>();
+        myMover = (Mover)GetComponent(typeof(Mover));
         GameObject map = GameObject.Find("Map");
-        myGOT = map.GetComponent<GOTracker>();
+        myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
     }
 	
 	// Update is called once per frame
 	void Update () {
         myMover.SetVelocity(new Vector2(0, 1), .7f);
-        myGOT.Report(gameObject);
+        myGOT.Report(this, typeof(Human));
 	}
 
     public void Tag()
     {
-        SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
+        //change color
+        SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
         sr.color = new Color(189.0f / 255.0f, 189.0f / 255.0f, 189.0f / 255.0f);
-        gameObject.AddComponent<Zombie>();
+        //report death to GO tracker
+        myGOT.ReportDeath<Human>(this);
+        //add zombie script
+        gameObject.AddComponent(typeof(Zombie));
+        //destroy this script
         Destroy(this);
     }
 }

@@ -15,13 +15,14 @@ public class ControlPoint : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        cpm = GameObject.Find("Map").GetComponent<CPManager>();
+        cpm = (CPManager)GameObject.Find("Map").GetComponent(typeof(CPManager));
         cpm.AddCP(this);
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
+        transform.localScale = new Vector3(1,1,1) * (1+(Camera.main.orthographicSize/3));
         //if we're being mouse-dragged...
 	    if (dragging)
         {

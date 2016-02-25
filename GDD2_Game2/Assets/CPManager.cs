@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 public class CPManager : MonoBehaviour {
     //list of all active control points
-    List<ControlPoint> CPs = new List<ControlPoint>();
+    HashSet<ControlPoint> CPs = new HashSet<ControlPoint>();
 
     //field of movement vectors
     Vector2[,] vectorField;
@@ -26,7 +26,7 @@ public class CPManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         //get the map's collider
-        BoxCollider2D mapBox = GameObject.Find("Map").GetComponent<BoxCollider2D>();
+        BoxCollider2D mapBox = (BoxCollider2D)GameObject.Find("Map").GetComponent(typeof(BoxCollider2D));
         vfSize = mapBox.size / vfPrecision; //vf size is the collider's size divided by the precision
         //mapPos is the position of the vf's bottom-left corner in world space
         //the vf is bottom-left anchored, but the collider is center anchored. we have to get the collider's bottom-left corner
@@ -43,15 +43,15 @@ public class CPManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         //debug lines
-        for (int n = 0; n < vectorField.GetLength(0); n++)
+        /*for (int n = 0; n < vectorField.GetLength(0); n++)
             for (int c = 0; c < vectorField.GetLength(1); c++)
-                Debug.DrawRay(VFToWorldSpace(new Vector3(n, c, 0)), (Vector3)vectorField[n, c].normalized, Color.green, Time.deltaTime);
+                Debug.DrawRay(VFToWorldSpace(new Vector3(n, c, 0)), (Vector3)vectorField[n, c].normalized, Color.green, Time.deltaTime);*/
 
         //check for queued VF recalculations at every x frames (where x is recalcInterval)
         if (recalculateVF && Time.frameCount % recalcInterval == 0)
         {
             recalculateVF = false;
-            RecalculateVectorField();
+            StartCoroutine("RecalculateVectorField");
         }
         //if(Input.GetMouseButtonDown(0))
     }
@@ -59,19 +59,24 @@ public class CPManager : MonoBehaviour {
     public void AddCP(ControlPoint cp)
     {
         CPs.Add(cp);
-        RecalculateVectorField();
+        StartCoroutine("RecalculateVectorField");
     }
 
     public void RemoveCP(ControlPoint cp)
     {
         CPs.Remove(cp);
-        RecalculateVectorField();
+        StartCoroutine("RecalculateVectorField");
     }
 
-    void RecalculateVectorField()
+    IEnumerator RecalculateVectorField()
     {
+        //only process as many frames as necessary to get the vf recalculated within the recalc window
+        int calculationsPerFrame = (int)Math.Ceiling((vfSize.x * vfSize.y) / recalcInterval);
+
         //holds the vectors from current point to each control point
-        Vector2[] cpVectors;
+        Vector2[] cpVectors = new Vector2[CPs.Count];
+        ControlPoint[] cps = new ControlPoint[CPs.Count];
+        CPs.CopyTo(cps);
 
         //iterate through the dimensions of the vector field
         for (int row = 0; row < vectorField.GetLength(0); row++)
@@ -79,26 +84,26 @@ public class CPManager : MonoBehaviour {
             for (int col = 0; col < vectorField.GetLength(1); col++)
             {
                 //reinitialize cp vectors
-                cpVectors = new Vector2[CPs.Count];
+                Array.Clear(cpVectors, 0, cpVectors.Length);
 
                 //get the current point in VF space
                 Vector2 p = new Vector2(row, col);
 
                 //tracks the magnitude of the longest cp vector
                 float longestMagnitudeSqr = 0.0f;
-                float shortestMagnitudeSqr = float.MaxValue;
+                Vector2 firstCPVector = new Vector2(0,0);
                 //iterate through length of cp list
-                for (int c = 0; c < CPs.Count; c++)
+                int c = 0;
+                foreach(ControlPoint cp in cps)
                 {
-                    //get cp and its position (converted to VF space)
-                    ControlPoint cp = CPs[c];
+                    //ControlPoint cp = [c];
                     Vector2 cpPosition = WorldToVFSpace(new Vector2(cp.transform.position.x, cp.transform.position.y));
                     //cp vector is vector from position to cp position
                     cpVectors[c] = cpPosition - p;
+                    c++;
 
                     //check for new longest magnitude
                     if (cpPosition.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPosition.sqrMagnitude;
-                    if (cpPosition.sqrMagnitude < shortestMagnitudeSqr) shortestMagnitudeSqr = cpPosition.sqrMagnitude;
                 }
 
                 //we'll multiply all vectors by a scale factor so that the closest ones matter more
@@ -106,17 +111,20 @@ public class CPManager : MonoBehaviour {
                 //float scaleFactorBase = 1 - (1 / longestMagnitude);
                 Vector2 calculatedVector = new Vector2(0, 0);
 
-                //don't apply scale factor if there's only 1 cp
+                //if there's only one CP, don't apply scale factor
                 if (cpVectors.Length == 1)
                     calculatedVector = cpVectors[0];
-                //otherwise,
+                //otherwise...
                 else
                     //add all scaled cp vectors
                     foreach (Vector2 v in cpVectors)
-                        calculatedVector += v * ((longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude);
+                        calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
 
                 //final vector is the sum normalized
-                vectorField[row, col] = calculatedVector;           
+                vectorField[row, col] = calculatedVector;
+
+                //if we've done the last in this batch, stop until the next frame
+                if ((row * col) % calculationsPerFrame == calculationsPerFrame - 1) yield return null;      
             }
         }
     }
