@@ -59,13 +59,16 @@ public class CPManager : MonoBehaviour {
     public void AddCP(ControlPoint cp)
     {
         CPs.Add(cp);
-        StartCoroutine("RecalculateVectorField");
+        QueueVFRecalculation();
     }
 
     public void RemoveCP(ControlPoint cp)
     {
         CPs.Remove(cp);
-        StartCoroutine("RecalculateVectorField");
+        //skip a frame to allow the CP to kill itself before we start
+        Destroy(cp.gameObject);
+        StopCoroutine("RecalculateVectorField");
+        QueueVFRecalculation();
     }
 
     IEnumerator RecalculateVectorField()
@@ -124,7 +127,7 @@ public class CPManager : MonoBehaviour {
                 vectorField[row, col] = calculatedVector;
 
                 //if we've done the last in this batch, stop until the next frame
-                if ((row * col) % calculationsPerFrame == calculationsPerFrame - 1) yield return null;      
+                if ((row * col) % calculationsPerFrame == calculationsPerFrame - 1) yield return null;
             }
         }
     }
@@ -136,8 +139,8 @@ public class CPManager : MonoBehaviour {
         //correct for map offset
         pos = WorldToVFSpace(pos);
         //if we're off the map, return normalized vector toward map center
-        if (!IsWorldPosWithinVF(pos))
-            return (new Vector2(vfSize.x / 2, vfSize.y / 2) - pos).normalized;
+        if (!IsVFPosWithinVF(pos))
+            return (VFToWorldSpace(new Vector2(vfSize.x / 2, vfSize.y / 2) - pos)).normalized;
 
         Vector2 returnVector = new Vector2(0, 0);
 

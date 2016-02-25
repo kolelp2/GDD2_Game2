@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 
 public class GOTracker : MonoBehaviour {
-    Dictionary<System.Type, HashSet<MonoBehaviour>> objDictionary = new Dictionary<System.Type, HashSet<MonoBehaviour>>();
+    Dictionary<System.Type, List<MonoBehaviour>> objDictionary = new Dictionary<System.Type, List<MonoBehaviour>>();
 	// Use this for initialization
 	void Start () {
 	
@@ -10,14 +10,16 @@ public class GOTracker : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+	    
 	}
 
-    public HashSet<MonoBehaviour> GetObjsWithinRange(Vector2 position, float radius, System.Type type)
+    public List<MonoBehaviour> GetObjs(Vector2 position, float radius, System.Type type)
     {
-        HashSet<MonoBehaviour> activeAndInRange = new HashSet<MonoBehaviour>();
-        if (!objDictionary.ContainsKey(type)) return activeAndInRange;
-        foreach (MonoBehaviour mb in objDictionary[type])
+        if (!objDictionary.ContainsKey(type)) return new List<MonoBehaviour>();
+        //return objDictionary[type];
+        List<MonoBehaviour> objOfType = objDictionary[type];
+        List<MonoBehaviour> activeAndInRange = new List<MonoBehaviour>(objOfType.Count);
+        foreach (MonoBehaviour mb in objOfType)
             //if object is active, and the squared distance from it to the given position is less than or equal to the given radius squared
             if (((Vector2)mb.transform.position - position).sqrMagnitude <= radius * radius)
                 activeAndInRange.Add(mb);
@@ -28,9 +30,9 @@ public class GOTracker : MonoBehaviour {
     public void Report(MonoBehaviour mb, System.Type type)
     {
         //if the obj dictionary doesn't contain this type yet, add it
-        if (!objDictionary.ContainsKey(type)) objDictionary.Add(type, new HashSet<MonoBehaviour>());
+        if (!objDictionary.ContainsKey(type)) objDictionary.Add(type, new List<MonoBehaviour>());
         //get the set for this type
-        HashSet<MonoBehaviour> list = objDictionary[type];
+        List<MonoBehaviour> list = objDictionary[type];
         //add the script to it if it isn't already there
         if (!list.Contains(mb)) list.Add(mb);
     }

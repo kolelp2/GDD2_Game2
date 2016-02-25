@@ -14,7 +14,8 @@ public class Human : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         myMover.SetVelocity(new Vector2(0, 1), .7f);
-        myGOT.Report(this, typeof(Human));
+        if (Time.frameCount % 3 == 0)
+            myGOT.Report(this, typeof(Human));
 	}
 
     public void Tag()
