@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public class MapInfo : MonoBehaviour {
     Vector2 mapSize;
@@ -57,6 +58,17 @@ public class MapInfo : MonoBehaviour {
 
         //return new X and Y with old Z
         return new Vector3(conv.x, conv.y, z);
+    }
+
+    //floors the vector components so they can be used as a 2d array index
+    public Vector2 PosToIndex(Vector2 pos)
+    {
+        return new Vector2((int)Math.Floor(pos.x), (int)Math.Floor(pos.y));
+    }
+
+    public Vector2 WorldToGridIndex(Vector2 worldPos, int gridPrecision)
+    {
+        return PosToIndex(WorldToGridIndex(worldPos, gridPrecision));
     }
 
     public bool IsWorldPosOnMap(Vector2 worldPos)
