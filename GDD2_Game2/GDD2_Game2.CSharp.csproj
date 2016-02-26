@@ -68,6 +68,7 @@
     <Compile Include="Assets\ControlPoint.cs" />
     <Compile Include="Assets\GOTracker.cs" />
     <Compile Include="Assets\Human.cs" />
+    <Compile Include="Assets\MapInfo.cs" />
     <Compile Include="Assets\Mover.cs" />
     <Compile Include="Assets\Zombie.cs" />
   </ItemGroup>

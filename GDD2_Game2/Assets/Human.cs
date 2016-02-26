@@ -24,6 +24,7 @@ public class Human : MonoBehaviour {
         SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
         sr.color = new Color(189.0f / 255.0f, 189.0f / 255.0f, 189.0f / 255.0f);
         //report death to GO tracker
+        myGOT.Report(this, typeof(Human));
         myGOT.ReportDeath<Human>(this);
         //add zombie script
         gameObject.AddComponent(typeof(Zombie));
