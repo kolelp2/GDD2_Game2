@@ -15,16 +15,17 @@ public class Zombie : MonoBehaviour {
     int chaseTime = 7;
     [SerializeField]
     float reach = .1f;
-
     [SerializeField]
-    int targetCheckInterval = 5;
-    bool checkingForTarget = false;
+    int updateInterval = 10;
+    int updateSeed;
+    
 	// Use this for initialization
 	void Start () {
         myMover = GetComponent<Mover>();
         GameObject map = GameObject.Find("Map");
         myCPM = (CPManager)map.GetComponent(typeof(CPManager));
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
+        updateSeed = (int)Math.Round(UnityEngine.Random.value * (updateInterval-1));
 	}
 	
 	// Update is called once per frame
@@ -33,7 +34,7 @@ public class Zombie : MonoBehaviour {
         if (target == null || lastTargetTime - DateTime.Now > new TimeSpan(0, 0, chaseTime))
         {
             //if we aren't already looking for a target, start doing that
-            CheckForTarget();
+            if (Time.frameCount % updateInterval == updateSeed) CheckForTarget();
             //if(!checkingForTarget) StartCoroutine("CheckForTarget");
 
             //if we don't have a target, the CPM tells us where to go
@@ -46,41 +47,28 @@ public class Zombie : MonoBehaviour {
             myMover.SetVelocity(target.transform.position - transform.position, 1);
         }
 
-        if (Time.frameCount % 3 == 0)
+        if (Time.frameCount % updateInterval == updateSeed+1)
             myGOT.Report(this, typeof(Zombie));
     }
 
     void CheckForTarget()
     {
-        //mark that we've started checking
-        checkingForTarget = true;
 
         //get nearby game objects from the GO tracker
         List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, typeof(Human));
 
         //determine how many checks we'll make per rame
-        int checksPerFrame = (int)Math.Ceiling(nearbyMBs.Count / (float)targetCheckInterval);
+        //int checksPerFrame = (int)Math.Ceiling(nearbyMBs.Count / (float)targetCheckInterval);
 
         //temp values
         Human closestHuman = null;
         float closestHumanDistanceSqr = float.MaxValue;
 
         //for each GO...
-        int checksThisFrame = 0;
-        foreach (MonoBehaviour go in nearbyMBs)
+        for(int c=0;c<nearbyMBs.Count;c++)
         {
-            //if we've done all our checks for this frame...
-            if (checksThisFrame == checksPerFrame)
-            {
-                //stop until the next one
-                //yield return null;
-
-                //when we come back, reset the count for this frame
-                checksThisFrame = 0;
-            }
-
             //cast to human
-            Human goHuman = (Human)go;
+            Human goHuman = (Human)nearbyMBs[c];
             //if it does, get the distance to it
             float goHumanDistanceSqr = (transform.position - goHuman.transform.position).sqrMagnitude;
             //if it's closer than the current closest and within view distance, make it the new closest
@@ -89,16 +77,10 @@ public class Zombie : MonoBehaviour {
                 closestHuman = goHuman;
                 closestHumanDistanceSqr = goHumanDistanceSqr;
             }
-
-            //for every completed check, increment the count
-            checksThisFrame++;
-
         }
         //closest human is the target. note the time the new target was acquired
         target = closestHuman;
         lastTargetTime = DateTime.Now;
-        //yield return null;
-        checkingForTarget = false;
         
     } 
 }

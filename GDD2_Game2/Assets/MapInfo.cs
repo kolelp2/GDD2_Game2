@@ -68,7 +68,7 @@ public class MapInfo : MonoBehaviour {
 
     public Vector2 WorldToGridIndex(Vector2 worldPos, int gridPrecision)
     {
-        return PosToIndex(WorldToGridIndex(worldPos, gridPrecision));
+        return PosToIndex(WorldToGridSpace(worldPos, gridPrecision));
     }
 
     public bool IsWorldPosOnMap(Vector2 worldPos)
