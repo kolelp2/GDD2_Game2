@@ -65,11 +65,15 @@
   <ItemGroup>
     <Compile Include="Assets\CPManager.cs" />
     <Compile Include="Assets\CameraControls.cs" />
+    <Compile Include="Assets\Camp.cs" />
     <Compile Include="Assets\ControlPoint.cs" />
+    <Compile Include="Assets\Food.cs" />
+    <Compile Include="Assets\Fuel.cs" />
     <Compile Include="Assets\GOTracker.cs" />
     <Compile Include="Assets\Human.cs" />
     <Compile Include="Assets\MapInfo.cs" />
     <Compile Include="Assets\Mover.cs" />
+    <Compile Include="Assets\Water.cs" />
     <Compile Include="Assets\Zombie.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />

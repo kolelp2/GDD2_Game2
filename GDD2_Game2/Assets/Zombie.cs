@@ -48,14 +48,14 @@ public class Zombie : MonoBehaviour {
         }
 
         if (Time.frameCount % updateInterval == updateSeed+1)
-            myGOT.Report(this, typeof(Zombie));
+            myGOT.Report(this, (int)ObjectType.Zombie);
     }
 
     void CheckForTarget()
     {
 
         //get nearby game objects from the GO tracker
-        List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, typeof(Human));
+        List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, (int)ObjectType.Human);
 
         //determine how many checks we'll make per rame
         //int checksPerFrame = (int)Math.Ceiling(nearbyMBs.Count / (float)targetCheckInterval);

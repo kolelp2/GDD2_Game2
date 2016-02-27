@@ -3,6 +3,16 @@ using System.Collections;
 using System;
 
 public class MapInfo : MonoBehaviour {
+    [SerializeField]
+    readonly static int DayLengthInSeconds = 600;
+    static int dayNumber = 0;
+    static int DayNumber
+    {
+        get { return dayNumber; }
+    }
+
+    public static event EventHandler<DayEndEventArgs> DayEndEvent;
+
     Vector2 mapSize;
     public Vector2 MapSize
     {
@@ -23,7 +33,13 @@ public class MapInfo : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        //if the current day (running time divided by day length floored) doesn't equal the recorded current day,
+        if ((int)Math.Floor(Time.time / DayLengthInSeconds) != dayNumber)
+        {
+            //increment the recorded day number and emit day end event
+            dayNumber++;
+            DayEndEvent(this, new DayEndEventArgs(dayNumber));
+        }
 	}
 
     //takes a vector representing a point in the world and returns a vector representing the corresponding point in a grid of the given precision within the map
@@ -82,5 +98,21 @@ public class MapInfo : MonoBehaviour {
     {
         gridPos = GridToWorldSpace(gridPos, gridPrecision);
         return IsWorldPosOnMap(gridPos);
+    }
+
+    
+}
+
+public class DayEndEventArgs : EventArgs
+{
+    int dayNumber = 0;
+    public int DayNumber
+    {
+        get { return dayNumber; }
+    }
+
+    public DayEndEventArgs(int _dn)
+    {
+        dayNumber = _dn;
     }
 }
