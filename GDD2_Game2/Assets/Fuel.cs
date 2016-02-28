@@ -1,20 +1,26 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Fuel : MonoBehaviour {
+public class Fuel : ResourceNode {
     GOTracker myGOT;
+
     [SerializeField]
-    int capacity = 100;
-    public readonly static float harvestRange = 5.0f;
+    float stock = 3000;
     [SerializeField]
-    float interationRadius = 10.0f;
-    public float InteractionRadius
+    public readonly static float harvestRange = .3f;
+    public override float HarvestRange
     {
-        get { return interationRadius; }
+        get { return harvestRange; }
+    }
+    public override ResourceType ResourceType
+    {
+        get { return ResourceType.FuelRaw; }
     }
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+
+        //we can't report in start because the GOT might not be ready, so we put it off till the second frame
         StartCoroutine(LateStart());        
     }
 
@@ -26,21 +32,25 @@ public class Fuel : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (capacity <= 0)
+        if (stock <= 0)
         {
             myGOT.ReportDeath(this, ObjectType.Fuel);
-            Destroy(this);
+            Destroy(gameObject);
         }
     }
-    //if capacity isn't 0, decrement it and send true to indicate that the harvester got a resource
-    public bool Harvest()
+    //see comments in food
+    public override float Harvest(float amt)
     {
-        if (capacity <= 0)
-            return false;
+        if (stock >= amt)
+        {
+            stock -= amt;
+            return amt;
+        }
         else
         {
-            capacity--;
-            return true;
+            float returnAmt = stock;
+            stock = 0;
+            return returnAmt;
         }
     }
 }

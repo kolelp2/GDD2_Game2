@@ -3,19 +3,27 @@ using System.Collections;
 
 public class Camp : MonoBehaviour {
     [SerializeField]
-    static float minInteractRadius = 10.0f;
-    float interationRadius = 10.0f;
+    public readonly static float minInteractRadius = .50f;
+    float interationRadius = 3.0f;
+    double multiplier = 1.0;
+    double multiplierMultiplier = .01;
+    Vector3 initialScale;
     public float InteractionRadius
     {
         get { return interationRadius; }
     }
     GOTracker myGOT;
+    SpriteRenderer mySR;
 
     //4 for the three raw resource node types plus ammo
-    int[] inventory = new int[GOTracker.resourceNodeTypeCount + 1];
+    float[] inventory = new float[GOTracker.resourceNodeTypeCount + 1];
 	// Use this for initialization
 	void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+        mySR = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
+        initialScale = mySR.transform.localScale;
+        for (int c = 0; c < inventory.Length; c++)
+            inventory[c] = 0;
         StartCoroutine(LateStart());
     }
 
@@ -27,25 +35,35 @@ public class Camp : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-	
+        interationRadius = minInteractRadius * (float)multiplier;
+        mySR.transform.localScale = initialScale * (float)multiplier;
 	}
 
     //human asks to use a given type of raw resource, camp tells them whether it can give them one
-    bool RequestToUseRawResource(ResourceTypeAll rawResourceType)
+    public float RequestToUseRawResource(ResourceType rawResourceType, float amt)
     {
         int rawResourceTypeInt = (int)rawResourceType;
 
-        if (rawResourceTypeInt >= inventory.Length || inventory[rawResourceTypeInt] <= 0)
-            return false;
+        if (rawResourceTypeInt >= inventory.Length)
+            return 0;
         else
         {
-            inventory[rawResourceTypeInt]--;
-            return true;
+            //return requested amount by default
+            float returnVal = amt;
+            inventory[rawResourceTypeInt] -= amt;  //subtract requested amount from inventory
+            if(inventory[rawResourceTypeInt]<0)
+            {
+                //if we brought the inventory below zero, remove the overdraw from the return value
+                returnVal += inventory[rawResourceTypeInt];
+                inventory[rawResourceTypeInt] = 0; //and set the inventory to 0
+            }
+            //multiplier *= 1 + (multiplierMultiplier * returnVal);
+            return returnVal;
         }
     }
 
     //human provides its inventory and offers one of a given resource type, camp tells them whether it takes one
-    bool DepositRawResource(int[] inv, ResourceTypeAll resourceType)
+    public bool DepositRawResource(float[] inv, ResourceType resourceType)
     {
         int resourceTypeInt = (int)resourceType;
 
@@ -53,7 +71,8 @@ public class Camp : MonoBehaviour {
             return false;
         else
         {
-            inv[resourceTypeInt]--;
+            inventory[resourceTypeInt] += (float)multiplier * inv[resourceTypeInt];
+            inv[resourceTypeInt] = 0;
             return true;
         }
     }

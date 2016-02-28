@@ -1,18 +1,23 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Water : MonoBehaviour {
+public class Water : ResourceNode
+{
     GOTracker myGOT;
-    public readonly static float harvestRange = 5.0f;
-    [SerializeField]
-    float interationRadius = 10.0f;
-    public float InteractionRadius
+    public readonly static float harvestRange = .3f;
+    public override float HarvestRange
     {
-        get { return interationRadius; }
+        get { return harvestRange; }
+    }
+    public override ResourceType ResourceType
+    {
+        get { return ResourceType.WaterRaw; }
     }
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+
+        //we can't report in start because the GOT might not be ready, so we put it off till the second frame
         StartCoroutine(LateStart());
     }
 
@@ -27,8 +32,13 @@ public class Water : MonoBehaviour {
         
 	}
 
-    public bool Harvest()
+    public override float Harvest(float amt)
     {
-        return true;
+        return amt;
+    }
+
+    public float? GetStock(GameObject go)
+    {
+        return float.MaxValue;
     }
 }

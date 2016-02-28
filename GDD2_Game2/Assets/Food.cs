@@ -1,18 +1,24 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Food : MonoBehaviour {
+public class Food : ResourceNode
+{
     GOTracker myGOT;
+
     [SerializeField]
-    int capacity = 100;
+    float stock = 3000;
     [SerializeField]
-    public readonly static float harvestRange = 5.0f;
-    [SerializeField]
-    float interationRadius = 10.0f;
-    public float InteractionRadius
+    public readonly static float harvestRange = .3f;
+
+    public override float HarvestRange
     {
-        get { return interationRadius; }
+        get { return harvestRange; }
     }
+    public override ResourceType ResourceType
+    {
+        get { return ResourceType.FoodRaw; }
+    }
+
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
@@ -20,23 +26,45 @@ public class Food : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (capacity <= 0)
-        {
-            myGOT.ReportDeath(this, ObjectType.Food);
-            Destroy(this);
-        }
         myGOT.Report(this, (int)ObjectType.Food);
+        //if no stock left
+        if (stock <= 0)
+        {
+            //we ded
+            myGOT.ReportDeath(this, ObjectType.Food);
+            Destroy(gameObject);
+        }
 	}
 
-    //if capacity isn't 0, decrement it and send true to indicate that the harvester got a resource
-    public bool Harvest()
+    //returns a number of resources to the caller as a float. will match the requested amount until stock is depleted
+    public override float Harvest(float amt)
     {
-        if (capacity <= 0)
-            return false;
+        //if we have enough stock to cover the request
+        if (stock >= amt)
+        {       
+            //subtract amount from stock and return amount     
+            stock -= amt;
+            return amt;
+        }
+        //if we don't
         else
         {
-            capacity--;
-            return true;
+            //return what's left of our stock and set stock to 0
+            float returnAmt = stock;
+            stock = 0;
+            return returnAmt;
         }
     }
+}
+
+public abstract class ResourceNode : MonoBehaviour
+{
+    //range at which this resource may be harvested
+    public abstract float HarvestRange { get; }
+
+    //the type - see ResourceType enum
+    public abstract ResourceType ResourceType { get; }
+
+    //duh
+    public abstract float Harvest(float amt);
 }

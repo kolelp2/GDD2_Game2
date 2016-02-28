@@ -4,11 +4,14 @@ using System;
 
 public class MapInfo : MonoBehaviour {
     [SerializeField]
-    readonly static int DayLengthInSeconds = 600;
-    static int dayNumber = 0;
-    static int DayNumber
+    public readonly static int DayLengthInSeconds = 600;
+    int dayNumber = 0;
+    public static float WorldTimeInDays
     {
-        get { return dayNumber; }
+        get
+        {
+            return Time.time / DayLengthInSeconds;
+        }
     }
 
     public static event EventHandler<DayEndEventArgs> DayEndEvent;
@@ -36,9 +39,9 @@ public class MapInfo : MonoBehaviour {
         //if the current day (running time divided by day length floored) doesn't equal the recorded current day,
         if ((int)Math.Floor(Time.time / DayLengthInSeconds) != dayNumber)
         {
-            //increment the recorded day number and emit day end event
+            //increment day number and emit day end event
             dayNumber++;
-            DayEndEvent(this, new DayEndEventArgs(dayNumber));
+            DayEndEvent(this, new DayEndEventArgs());
         }
 	}
 
@@ -90,8 +93,8 @@ public class MapInfo : MonoBehaviour {
     public bool IsWorldPosOnMap(Vector2 worldPos)
     {
         //worldPos = WorldToGridSpace(worldPos, gridPrecision);
-        worldPos = worldPos + mapPos;
-        return !(worldPos.x > mapSize.x + mapPos.x || worldPos.x < mapPos.x || worldPos.y > mapSize.y + mapPos.y || worldPos.y < mapPos.y);
+        worldPos = worldPos - mapPos;
+        return !(worldPos.x > mapSize.x || worldPos.x < 0 || worldPos.y > mapSize.y || worldPos.y < 0);
     }
 
     public bool IsGridPosOnMap(Vector2 gridPos, int gridPrecision)
@@ -105,14 +108,7 @@ public class MapInfo : MonoBehaviour {
 
 public class DayEndEventArgs : EventArgs
 {
-    int dayNumber = 0;
-    public int DayNumber
+    public DayEndEventArgs()
     {
-        get { return dayNumber; }
-    }
-
-    public DayEndEventArgs(int _dn)
-    {
-        dayNumber = _dn;
     }
 }

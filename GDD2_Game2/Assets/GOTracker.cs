@@ -15,7 +15,7 @@ public class GOTracker : MonoBehaviour {
 
     void Awake()
     {
-        objDictionary = new Dictionary<Vector2, List<MonoBehaviour>>[Enum.GetNames(typeof(ObjectType)).Length];
+        objDictionary = new Dictionary<Vector2, List<MonoBehaviour>>[Enum.GetValues(typeof(ObjectType)).Length];
         for (int c = 0; c < objDictionary.Length; c++)
             objDictionary[c] = new Dictionary<Vector2, List<MonoBehaviour>>();
         mi = (MapInfo)gameObject.GetComponent(typeof(MapInfo));
@@ -57,7 +57,7 @@ public class GOTracker : MonoBehaviour {
                 {
                     MonoBehaviour mb = mapSquareList[c];
                     //if object is active, and the squared distance from it to the given position is less than or equal to the given radius squared
-                    if (((Vector2)mb.transform.position - position).sqrMagnitude <= radius * radius)
+                    if (mb != null && ((Vector2)mb.transform.position - position).sqrMagnitude <= radius * radius)
                         activeAndInRange.Add(mb);
                 }
             }
@@ -131,4 +131,8 @@ public class GOTracker : MonoBehaviour {
 }
 
 //it's very important that resource node types be first by index
-public enum ObjectType { Food = 0, Fuel = 1, Water = 2, Human = 3, Zombie = 4, Camp = 5 };
+public enum ObjectType { Food = 0, Water = 1, Fuel = 2, Human = 3, Zombie = 4, Camp = 5 }
+
+//the order is important here - raw node types first, processed node types last
+//it's also important that the resource types always start with food
+public enum ResourceType { FoodRaw = ObjectType.Food, WaterRaw = ObjectType.Water, FuelRaw = ObjectType.Fuel, Ammo = 3, FoodProcessed = 4, WaterProcessed = 5, FuelProcessed = 6 }
