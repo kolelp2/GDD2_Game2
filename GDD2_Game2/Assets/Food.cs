@@ -9,6 +9,7 @@ public class Food : ResourceNode
     float stock = 3000;
     [SerializeField]
     public readonly static float harvestRange = .3f;
+    static int drawDepth = -2;
 
     public override float HarvestRange
     {
@@ -22,6 +23,7 @@ public class Food : ResourceNode
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+        transform.position += new Vector3(0, 0, drawDepth);
     }
 	
 	// Update is called once per frame

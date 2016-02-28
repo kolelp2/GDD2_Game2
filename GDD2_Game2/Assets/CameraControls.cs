@@ -10,6 +10,8 @@ public class CameraControls : MonoBehaviour
     public Vector3 targetPosition;
     float multiplier = 0.0f;
     public float scrollSpeed = 1.0f;
+    [SerializeField]
+    float panSpeed = 2;
 
     void Start()
     {
@@ -35,13 +37,13 @@ public class CameraControls : MonoBehaviour
         //camera movement for this frame
         Vector2 cameraMovement = new Vector2(0, 0);
         //add directional vectors for any movement keys
-        if (Input.GetKey(KeyCode.W)) cameraMovement += new Vector2(0, 1);
-        if (Input.GetKey(KeyCode.A)) cameraMovement += new Vector2(-1, 0);
-        if (Input.GetKey(KeyCode.S)) cameraMovement += new Vector2(0, -1);
-        if (Input.GetKey(KeyCode.D)) cameraMovement += new Vector2(1, 0);
+        if (Input.GetKey(KeyCode.W)) cameraMovement += new Vector2(0, panSpeed);
+        if (Input.GetKey(KeyCode.A)) cameraMovement += new Vector2(-panSpeed, 0);
+        if (Input.GetKey(KeyCode.S)) cameraMovement += new Vector2(0, -panSpeed);
+        if (Input.GetKey(KeyCode.D)) cameraMovement += new Vector2(panSpeed, 0);
 
         //normalize the final vector and multiply by scroll speed
-        cameraMovement = cameraMovement.normalized * scrollSpeed;
+        cameraMovement = cameraMovement.normalized * scrollSpeed * panSpeed * (1 + .05f * targetOrtho);
 
         transform.position += new Vector3(cameraMovement.x, cameraMovement.y, 0);
     }

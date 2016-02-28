@@ -6,7 +6,7 @@ public class ControlPoint : MonoBehaviour {
     bool dragging = false; //is this point being mouse-dragged?
 
     [SerializeField]
-    static float drawDepth = -1.0f;
+    static float drawDepth = -5.0f;
 
     public static float DrawDepth
     {

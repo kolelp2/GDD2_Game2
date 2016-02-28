@@ -8,6 +8,7 @@ public class Camp : MonoBehaviour {
     double multiplier = 1.0;
     double multiplierMultiplier = .01;
     Vector3 initialScale;
+    static int drawDepth = -3;
     public float InteractionRadius
     {
         get { return interationRadius; }
@@ -25,6 +26,7 @@ public class Camp : MonoBehaviour {
         for (int c = 0; c < inventory.Length; c++)
             inventory[c] = 0;
         StartCoroutine(LateStart());
+        transform.position += new Vector3(0, 0, drawDepth);
     }
 
     IEnumerator LateStart()

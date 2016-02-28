@@ -8,6 +8,7 @@ public class Fuel : ResourceNode {
     float stock = 3000;
     [SerializeField]
     public readonly static float harvestRange = .3f;
+    static int drawDepth = -2;
     public override float HarvestRange
     {
         get { return harvestRange; }
@@ -19,6 +20,7 @@ public class Fuel : ResourceNode {
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+        transform.position += new Vector3(0, 0, drawDepth);
 
         //we can't report in start because the GOT might not be ready, so we put it off till the second frame
         StartCoroutine(LateStart());        
