@@ -18,6 +18,8 @@ public class Zombie : MonoBehaviour {
     [SerializeField]
     int updateInterval = 10;
     int updateSeed;
+    static int attackCD = 2;
+    int lastAttack = 0;
     
 	// Use this for initialization
 	void Start () {
@@ -43,7 +45,11 @@ public class Zombie : MonoBehaviour {
         }
         else
         {
-            if ((target.transform.position - transform.position).sqrMagnitude <= reach) target.Tag();
+            if (Time.frameCount-lastAttack>attackCD &&(target.transform.position - transform.position).sqrMagnitude <= reach)
+            {
+                lastAttack = Time.frameCount;
+                target.Tag();
+            }
             //if we have a target, chase it
             myMover.SetVelocity(target.transform.position - transform.position, 1);
         }
