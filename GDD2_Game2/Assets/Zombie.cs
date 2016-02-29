@@ -38,7 +38,8 @@ public class Zombie : MonoBehaviour {
             //if(!checkingForTarget) StartCoroutine("CheckForTarget");
 
             //if we don't have a target, the CPM tells us where to go
-            myMover.SetVelocity(myCPM.GetVectorAtPosition(transform.position), 1);
+            Vector2 targetVel = myCPM.GetVectorAtPosition(transform.position);
+            if (targetVel != Vector2.zero) myMover.SetVelocity(targetVel, 1);
         }
         else
         {

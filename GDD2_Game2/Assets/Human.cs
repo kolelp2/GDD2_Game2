@@ -13,13 +13,13 @@ public class Human : MonoBehaviour {
     [SerializeField]
     static float humanCheckDistance = 7.0f;
     [SerializeField]
-    static int greetInterval = 360;
+    static int greetInterval = 120;
     int greetSeed;
     [SerializeField]
     static int zombieCheckInterval = 120;
     int zombieCheckSeed;
     [SerializeField]
-    static int targetPickInterval = 60;
+    static int targetPickInterval = 20;
     int targetPickSeed;
     [SerializeField]
     static float zombieCheckDistance = 10.0f;
@@ -34,7 +34,7 @@ public class Human : MonoBehaviour {
     [SerializeField]
     static float campCheckDistance = 20.0f;
     [SerializeField]
-    static int decisionMakingInterval = 240;
+    static int decisionMakingInterval = 80;
     int decisionMakingSeed;
     [SerializeField]
     static float resourceThreshhold = 2.5f;
@@ -54,6 +54,7 @@ public class Human : MonoBehaviour {
     int reportSeed;
     static int moveInterval = 5;
     int moveSeed;
+    static int greetsPerTurn = 5;
     #endregion
 
     #region members
@@ -90,6 +91,9 @@ public class Human : MonoBehaviour {
 
     //resource decay per second
     float resourceDecay;
+
+    //are we panicking?
+    bool panic = false;
     #endregion
 
     #region properties
@@ -185,17 +189,17 @@ public class Human : MonoBehaviour {
             resourceLocationsByType[c] = new HashSet<Vector2>();
 
         //generate polling seeds
-        humanCheckSeed = (int)Math.Round(UnityEngine.Random.value * (humanCheckInterval));
-        greetSeed = (int)Math.Round(UnityEngine.Random.value * (greetInterval));
+        humanCheckSeed = (int)Math.Round(UnityEngine.Random.value * (humanCheckInterval-1));
+        greetSeed = (int)Math.Round(UnityEngine.Random.value * (greetInterval-1));
         zombieCheckSeed = (int)Math.Round(UnityEngine.Random.value * (zombieCheckInterval - 1));
-        targetPickSeed = (int)Math.Round(UnityEngine.Random.value * (targetPickInterval));
+        targetPickSeed = (int)Math.Round(UnityEngine.Random.value * (targetPickInterval-1));
         for (int c = 0; c < resourceNodeCheckSeed.Length; c++) //this array holds a seed for each raw resource type
-            resourceNodeCheckSeed[c] = (int)Math.Round(UnityEngine.Random.value * (resourceNodeCheckInterval));
-        campCheckSeed = (int)Math.Round(UnityEngine.Random.value * (campCheckInterval));
-        decisionMakingSeed = (int)Math.Round(UnityEngine.Random.value * (decisionMakingInterval));
-        actionSeed = (int)Math.Round(UnityEngine.Random.value * (actionInterval));
-        reportSeed = (int)Math.Round(UnityEngine.Random.value * (reportInterval));
-        moveSeed = (int)Math.Round(UnityEngine.Random.value * (moveInterval));
+            resourceNodeCheckSeed[c] = (int)Math.Round(UnityEngine.Random.value * (resourceNodeCheckInterval-1));
+        campCheckSeed = (int)Math.Round(UnityEngine.Random.value * (campCheckInterval-1));
+        decisionMakingSeed = (int)Math.Round(UnityEngine.Random.value * (decisionMakingInterval-1));
+        actionSeed = (int)Math.Round(UnityEngine.Random.value * (actionInterval-1));
+        reportSeed = (int)Math.Round(UnityEngine.Random.value * (reportInterval-1));
+        moveSeed = (int)Math.Round(UnityEngine.Random.value * (moveInterval-1));
     }
 	
 	// Update is called once per frame
@@ -218,7 +222,9 @@ public class Human : MonoBehaviour {
         #region attack
         if (targetZombie != null)
         {
+            panic = true;
             //set targetpos to a combination of away from zombie and towards nearest/strongest camp
+            targetPos = 2 * (Vector2)transform.position - (Vector2)targetZombie.transform.position;
 
             //tag the zombie
         }
@@ -231,14 +237,14 @@ public class Human : MonoBehaviour {
 
         //target pick
         if (Time.frameCount % targetPickInterval == targetPickSeed)
-            targetZombie = PickTarget();
+            PickTarget();
         #endregion
 
         //resource node checks
         #region node check
         int resourceNodeCheckMod = Time.frameCount % resourceNodeCheckInterval; //save the mod
         for(int c = 0;c<resourceNodeCheckSeed.Length;c++)//if the mod matches one of the seeds
-            if(resourceNodeCheckMod == resourceNodeCheckSeed[c])
+            if(!panic && (resourceNodeCheckMod == resourceNodeCheckSeed[c]))
             {
                 //add any in-range nodes of that resource to our hash set
                 nearbyResourceNodes = myGOT.GetObjsInRange(transform.position, resourceNodeCheckDistance, c);
@@ -252,7 +258,7 @@ public class Human : MonoBehaviour {
 
         //camp check
         #region camp check
-        if (Time.frameCount%campCheckInterval==campCheckSeed)
+        if (!panic && Time.frameCount%campCheckInterval==campCheckSeed)
         {
             CampCheck();
         }
@@ -260,25 +266,23 @@ public class Human : MonoBehaviour {
 
         //human check
         #region human check / greeting
-        if (Time.frameCount % humanCheckInterval == humanCheckSeed)
+        if (!panic && Time.frameCount % humanCheckInterval == humanCheckSeed)
             nearbyHumans = myGOT.GetObjsInRange(transform.position, humanCheckDistance, ObjectType.Human);
 
         //greeting
         if (Time.frameCount % greetInterval == greetSeed)
-            foreach (MonoBehaviour mb in nearbyHumans)
-                if (mb != null)
-                    Greet((Human)mb);
+            StartGreeting();
         #endregion
 
         //actions
         #region actions
-        if (Time.frameCount % actionInterval == actionSeed)
+        if (!panic && Time.frameCount % actionInterval == actionSeed)
             Actions();
         #endregion
 
         //decision making
         #region decision making
-        if ((targetPos == null || Time.frameCount % decisionMakingInterval == decisionMakingSeed) && targetZombie == null)
+        if (!panic && (targetPos == null || Time.frameCount % decisionMakingInterval == decisionMakingSeed))
         {
             //remove dead locations from resource node and camp sets
             foreach (Vector2 deadLocation in deadLocations)
@@ -349,19 +353,9 @@ public class Human : MonoBehaviour {
                 //if neither are walkable
                 else if (!(closestCampIsWalkable || closestNodeIsWalkable))
                 {
-                    if (Time.frameCount > campDelay)
-                    {
-                        /*CampCheck();
-                        closestCamp = ClosestCampLong;
-                        if (closestCamp == null || (closestCamp - (Vector2)transform.position).Value.sqrMagnitude > maximumCampDensity)
-                        {
-                            //drop a camp
-                            //make sure to add this camp to camp locations right away, otherwise he'll drop another next frame
-                            GameObject cmpObj = (GameObject)Instantiate(Resources.Load("Camp"), transform.position, Quaternion.identity);
-                            nearbyCamps.Add((Camp)cmpObj.GetComponent(typeof(Camp)));
-                            campLocations.Add((Vector2)transform.position);
-                        }*/
-                    }
+                    //if nothing is walkable, wander
+                    if (targetPos == null)
+                        targetPos = (Vector2)transform.position + UnityEngine.Random.insideUnitCircle.normalized * 50;
                 }
                 //if both are walkable...
                 else
@@ -445,6 +439,8 @@ public class Human : MonoBehaviour {
         }
         #endregion
 
+        panic = false;
+
         //reporting
         if (Time.frameCount % reportInterval == reportSeed)
             myGOT.Report(this, ObjectType.Human);
@@ -515,25 +511,42 @@ public class Human : MonoBehaviour {
         Destroy(this);
     }
 
-    Zombie PickTarget()
+    void PickTarget()
     {
-        return null;
+        MonoBehaviour current = targetZombie;
+        targetZombie = null;
+        foreach (MonoBehaviour z in nearbyZombies)
+            if (current == null || ((Vector2)z.transform.position - (Vector2)transform.position).sqrMagnitude < ((Vector2)current.transform.position - (Vector2)transform.position).sqrMagnitude)
+                targetZombie = (Zombie)z;
     }
 
-    void Greet(Human other, bool first = true)
+    void StartGreeting()
     {
-        targetPos = null;
+        for (int c = 0; c < nearbyHumans.Count && c<greetsPerTurn; c++)
+        {
+            MonoBehaviour mb = nearbyHumans[c];
+            if (mb != null)
+                StartCoroutine(Greet((Human)mb));
+        }
+    }
+    IEnumerator Greet(Human other, bool first = true)
+    {
+        //targetPos = null;
         //get new camp locations
         campLocations.UnionWith(other.campLocations);
+        yield return null;
         //get new node locations for each resource
         for (int c = 0; c < resourceLocationsByType.Length; c++)
             resourceLocationsByType[c].UnionWith(other.resourceLocationsByType[c]);
+        yield return null;
         //any dead locations the other has that this one doesn't get added to the dead locations set
         foreach (Vector2 v in other.deadLocationsArchive)
             if (!deadLocationsArchive.Contains(v))
                 deadLocations.Add(v);
+        yield return null;
         //if we're the first, they greet us as the second
         if (first && other != null) other.Greet(this, false);
+        //targetPos = null;
     }
 
     void OnDayEnd(object sender, DayEndEventArgs dea)

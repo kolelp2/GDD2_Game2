@@ -10,6 +10,7 @@ public class CameraControls : MonoBehaviour
     public Vector3 targetPosition;
     float multiplier = 0.0f;
     public float scrollSpeed = 1.0f;
+    public float zoomModifier = 2;
     [SerializeField]
     float panSpeed = 2;
 
@@ -21,6 +22,7 @@ public class CameraControls : MonoBehaviour
 
     void Update()
     {
+        //transform.position.Set(transform.position.x, transform.position.y, -10 - zoomModifier* Camera.main.orthographicSize);
         //get scroll amount
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0.0f)
