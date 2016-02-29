@@ -8,7 +8,7 @@ public class Fuel : ResourceNode {
     float stock = 3000;
     [SerializeField]
     public readonly static float harvestRange = .3f;
-    static int drawDepth = -2;
+    static float drawDepth = -.5f;
     public override float HarvestRange
     {
         get { return harvestRange; }

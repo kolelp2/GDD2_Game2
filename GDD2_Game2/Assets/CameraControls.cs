@@ -2,14 +2,14 @@
 
 public class CameraControls : MonoBehaviour
 {
-    public float zoomSpeed = 1;
+    public float zoomSpeed = 1000;
     public float targetOrtho;
-    public float smoothSpeed = 2.0f;
+    public float smoothSpeed = 50000000f;
     public float minOrtho = 1.0f;
-    public float maxOrtho = 20.0f;
+    public float maxOrtho = float.MaxValue;
     public Vector3 targetPosition;
     float multiplier = 0.0f;
-    public float scrollSpeed = 1.0f;
+    public float scrollSpeed = 50f;
     public float zoomModifier = 2;
     [SerializeField]
     float panSpeed = 2;
@@ -30,7 +30,7 @@ public class CameraControls : MonoBehaviour
             //increment target zoom
             targetOrtho -= scroll * zoomSpeed;
             //clamp
-            targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
+            //targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
         }
 
         //move toward target zoom

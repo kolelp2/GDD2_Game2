@@ -55,6 +55,9 @@ public class Human : MonoBehaviour {
     static int moveInterval = 5;
     int moveSeed;
     static int greetsPerTurn = 5;
+    static int attackCD = 5;
+    int lastAttack = 0;
+    float attackRange = 1f;
     #endregion
 
     #region members
@@ -227,6 +230,11 @@ public class Human : MonoBehaviour {
             targetPos = 2 * (Vector2)transform.position - (Vector2)targetZombie.transform.position;
 
             //tag the zombie
+            if (Time.frameCount - lastAttack > attackCD && ((Vector2)targetZombie.transform.position - (Vector2)transform.position).sqrMagnitude < attackRange * attackRange)
+            {
+                lastAttack = Time.frameCount;
+                targetZombie.Tag();
+            }
         }
         #endregion
 
@@ -516,7 +524,7 @@ public class Human : MonoBehaviour {
         MonoBehaviour current = targetZombie;
         targetZombie = null;
         foreach (MonoBehaviour z in nearbyZombies)
-            if (current == null || ((Vector2)z.transform.position - (Vector2)transform.position).sqrMagnitude < ((Vector2)current.transform.position - (Vector2)transform.position).sqrMagnitude)
+            if (z != null && (current == null || ((Vector2)z.transform.position - (Vector2)transform.position).sqrMagnitude < ((Vector2)current.transform.position - (Vector2)transform.position).sqrMagnitude))
                 targetZombie = (Zombie)z;
     }
 

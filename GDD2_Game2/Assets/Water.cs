@@ -5,7 +5,7 @@ public class Water : ResourceNode
 {
     GOTracker myGOT;
     public readonly static float harvestRange = .3f;
-    static int drawDepth = -2;
+    static float drawDepth = -.1f;
     public override float HarvestRange
     {
         get { return harvestRange; }

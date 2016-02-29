@@ -84,4 +84,10 @@ public class Zombie : MonoBehaviour {
         lastTargetTime = DateTime.Now;
         
     } 
+
+    public void Tag()
+    {
+        myGOT.ReportDeath(this, ObjectType.Zombie);
+        Destroy(gameObject);
+    }
 }
