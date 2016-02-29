@@ -3,6 +3,19 @@ using System.Collections;
 using System;
 
 public class MapInfo : MonoBehaviour {
+    [SerializeField]
+    public readonly static int DayLengthInSeconds = 600;
+    int dayNumber = 0;
+    public static float WorldTimeInDays
+    {
+        get
+        {
+            return Time.time / DayLengthInSeconds;
+        }
+    }
+
+    public static event EventHandler<DayEndEventArgs> DayEndEvent;
+
     Vector2 mapSize;
     public Vector2 MapSize
     {
@@ -23,7 +36,13 @@ public class MapInfo : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-	
+        //if the current day (running time divided by day length floored) doesn't equal the recorded current day,
+        if ((int)Math.Floor(Time.time / DayLengthInSeconds) != dayNumber)
+        {
+            //increment day number and emit day end event
+            dayNumber++;
+            DayEndEvent(this, new DayEndEventArgs());
+        }
 	}
 
     //takes a vector representing a point in the world and returns a vector representing the corresponding point in a grid of the given precision within the map
@@ -74,13 +93,22 @@ public class MapInfo : MonoBehaviour {
     public bool IsWorldPosOnMap(Vector2 worldPos)
     {
         //worldPos = WorldToGridSpace(worldPos, gridPrecision);
-        worldPos = worldPos + mapPos;
-        return !(worldPos.x > mapSize.x + mapPos.x || worldPos.x < mapPos.x || worldPos.y > mapSize.y + mapPos.y || worldPos.y < mapPos.y);
+        worldPos = worldPos - mapPos;
+        return !(worldPos.x > mapSize.x || worldPos.x < 0 || worldPos.y > mapSize.y || worldPos.y < 0);
     }
 
     public bool IsGridPosOnMap(Vector2 gridPos, int gridPrecision)
     {
         gridPos = GridToWorldSpace(gridPos, gridPrecision);
         return IsWorldPosOnMap(gridPos);
+    }
+
+    
+}
+
+public class DayEndEventArgs : EventArgs
+{
+    public DayEndEventArgs()
+    {
     }
 }

@@ -38,7 +38,8 @@ public class Zombie : MonoBehaviour {
             //if(!checkingForTarget) StartCoroutine("CheckForTarget");
 
             //if we don't have a target, the CPM tells us where to go
-            myMover.SetVelocity(myCPM.GetVectorAtPosition(transform.position), 1);
+            Vector2 targetVel = myCPM.GetVectorAtPosition(transform.position);
+            if (targetVel != Vector2.zero) myMover.SetVelocity(targetVel, 1);
         }
         else
         {
@@ -48,14 +49,14 @@ public class Zombie : MonoBehaviour {
         }
 
         if (Time.frameCount % updateInterval == updateSeed+1)
-            myGOT.Report(this, typeof(Zombie));
+            myGOT.Report(this, (int)ObjectType.Zombie);
     }
 
     void CheckForTarget()
     {
 
         //get nearby game objects from the GO tracker
-        List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, typeof(Human));
+        List<MonoBehaviour> nearbyMBs = myGOT.GetObjsInRange(transform.position, viewDistance, (int)ObjectType.Human);
 
         //determine how many checks we'll make per rame
         //int checksPerFrame = (int)Math.Ceiling(nearbyMBs.Count / (float)targetCheckInterval);
