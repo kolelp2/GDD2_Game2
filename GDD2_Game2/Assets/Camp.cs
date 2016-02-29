@@ -8,7 +8,7 @@ public class Camp : MonoBehaviour {
     double multiplier = 1.0;
     double multiplierMultiplier = .01;
     Vector3 initialScale;
-    static int drawDepth = -3;
+    static float drawDepth = -.8f;
     public float InteractionRadius
     {
         get { return interationRadius; }
