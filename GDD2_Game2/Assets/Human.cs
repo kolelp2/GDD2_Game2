@@ -539,22 +539,25 @@ public class Human : MonoBehaviour {
     }
     IEnumerator Greet(Human other, bool first = true)
     {
-        //targetPos = null;
         //get new camp locations
-        campLocations.UnionWith(other.campLocations);
+        foreach (Vector2 cLoc in other.campLocations)
+            campLocations.Add(cLoc);
+       // other.campLocations = campLocations;
         yield return null;
         //get new node locations for each resource
         for (int c = 0; c < resourceLocationsByType.Length; c++)
-            resourceLocationsByType[c].UnionWith(other.resourceLocationsByType[c]);
+        {
+            foreach (Vector2 rLoc in other.resourceLocationsByType[c])
+                resourceLocationsByType[c].Add(rLoc);
+            //other.resourceLocationsByType[c] = resourceLocationsByType[c];
+        }
         yield return null;
         //any dead locations the other has that this one doesn't get added to the dead locations set
-        foreach (Vector2 v in other.deadLocationsArchive)
-            if (!deadLocationsArchive.Contains(v))
-                deadLocations.Add(v);
+        foreach (Vector2 dLoc in other.deadLocationsArchive)
+            deadLocations.Add(dLoc);
+        //other.deadLocations = deadLocations;
         yield return null;
-        //if we're the first, they greet us as the second
-        if (first && other != null) other.Greet(this, false);
-        //targetPos = null;
+        other.Greet(this, false);
     }
 
     void OnDayEnd(object sender, DayEndEventArgs dea)
