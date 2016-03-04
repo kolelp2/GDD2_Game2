@@ -19,6 +19,10 @@ public class CPManager : MonoBehaviour {
     int recalcInterval = 5;
     [SerializeField]
     int vfPrecision = 1;
+    [SerializeField]
+    float cpRadius = 100.0f;
+    [SerializeField]
+    float cpDeadZone = 10.0f;
 
     void Awake()
     {
@@ -105,11 +109,16 @@ public class CPManager : MonoBehaviour {
                     //ControlPoint cp = [c];
                     Vector2 cpPosition = mi.WorldToGridSpace(new Vector2(cp.transform.position.x, cp.transform.position.y), vfPrecision);
                     //cp vector is vector from position to cp position
-                    cpVectors[c] = cpPosition - p;
+                    Vector2 cpPositionRelativeToGridPoint = cpPosition - p;
                     c++;
+                    if ((cpPositionRelativeToGridPoint.sqrMagnitude < (cpRadius / vfPrecision) * (cpRadius / vfPrecision))
+                        && !(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
+                        cpVectors[c - 1] = cpPositionRelativeToGridPoint;
+                    else
+                        continue;
 
                     //check for new longest magnitude
-                    if (cpPosition.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPosition.sqrMagnitude;
+                    if (cpPositionRelativeToGridPoint.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPositionRelativeToGridPoint.sqrMagnitude;
                 }
 
                 //we'll multiply all vectors by a scale factor so that the closest ones matter more
