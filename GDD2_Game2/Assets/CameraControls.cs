@@ -44,6 +44,9 @@ public class CameraControls : MonoBehaviour
         if (Input.GetKey(KeyCode.S)) cameraMovement += new Vector2(0, -panSpeed);
         if (Input.GetKey(KeyCode.D)) cameraMovement += new Vector2(panSpeed, 0);
 
+        //exit game
+        if (Input.GetKey(KeyCode.Escape)) Application.Quit();
+
         //normalize the final vector and multiply by scroll speed
         cameraMovement = cameraMovement.normalized * scrollSpeed * panSpeed * (1 + .05f * targetOrtho);
 
