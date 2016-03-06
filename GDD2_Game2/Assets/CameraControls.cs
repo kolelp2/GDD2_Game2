@@ -46,6 +46,9 @@ public class CameraControls : MonoBehaviour
         if (Input.GetKey(KeyCode.Z)) targetOrtho -= .1f * zoomSpeed;
         else if (Input.GetKey(KeyCode.X)) targetOrtho += .1f * zoomSpeed;
 
+        //exit game
+        if (Input.GetKey(KeyCode.Escape)) Application.Quit();
+
         //normalize the final vector and multiply by scroll speed
         cameraMovement = cameraMovement.normalized * scrollSpeed * panSpeed * (1 + .05f * targetOrtho);
 
