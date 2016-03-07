@@ -62,6 +62,8 @@ public class Human : MonoBehaviour {
     static float skillFor50Percent = 50f;
     static float skillPerEvade = .5f;
     static float skillPerKill = 2f;
+    static float statTransferPercentage = .05f;
+    static float staminaPerSecond = .5f;
     #endregion
 
     #region members
@@ -175,7 +177,7 @@ public class Human : MonoBehaviour {
         }
     }
 
-    float EvadeChance
+    float InverseEvadeChance
     {
         get
         {
@@ -236,6 +238,14 @@ public class Human : MonoBehaviour {
         }
         #endregion
 
+        //stat increases
+        #region stats
+        //stamina - only while moving, twice as fast in combat
+        if (!(myMover.Velocity == Vector2.zero))
+            myStats.ChangeStat(StatTypes.Stamina, (panic) ? 2 * staminaPerSecond * Time.deltaTime : staminaPerSecond * Time.deltaTime);
+        #endregion
+
+
         //attack
         #region attack
         if (targetZombie != null)
@@ -248,7 +258,10 @@ public class Human : MonoBehaviour {
             if (Time.frameCount - lastAttack > attackCD && ((Vector2)targetZombie.transform.position - (Vector2)transform.position).sqrMagnitude < attackRange * attackRange)
             {
                 lastAttack = Time.frameCount;
-                targetZombie.Tag();
+                bool success = false;
+                targetZombie.Tag(InverseEvadeChance, out success);
+                if (success)
+                    myStats.ChangeStat(StatTypes.Skill, skillPerKill);
             }
         }
         #endregion
@@ -523,7 +536,7 @@ public class Human : MonoBehaviour {
 
     public void Tag(float atkValue)
     {
-        if(atkValue<0 || atkValue>EvadeChance)
+        if(atkValue<0 || atkValue>InverseEvadeChance)
         {
             myStats.ChangeStat(StatTypes.Skill, skillPerEvade);
             return;
@@ -562,22 +575,37 @@ public class Human : MonoBehaviour {
         //get new camp locations
         foreach (Vector2 cLoc in other.campLocations)
             campLocations.Add(cLoc);
-       // other.campLocations = campLocations;
         yield return null;
+
         //get new node locations for each resource
         for (int c = 0; c < resourceLocationsByType.Length; c++)
         {
             foreach (Vector2 rLoc in other.resourceLocationsByType[c])
                 resourceLocationsByType[c].Add(rLoc);
-            //other.resourceLocationsByType[c] = resourceLocationsByType[c];
         }
         yield return null;
+
         //any dead locations the other has that this one doesn't get added to the dead locations set
         foreach (Vector2 dLoc in other.deadLocationsArchive)
             deadLocations.Add(dLoc);
-        //other.deadLocations = deadLocations;
         yield return null;
-        other.Greet(this, false);
+
+        //stat transfers
+        StatTransfer(StatTypes.Skill, other);
+        StatTransfer(StatTypes.Knowledge, other);
+        StatTransfer(StatTypes.Coordination, other);
+
+        if (first)
+            other.Greet(this, false);
+    }
+
+    void StatTransfer(StatTypes stat, Human other)
+    {
+        //if other's skill is greater than ours, add the difference multiplied by the transfer percentage to ours
+        float myStat = myStats.GetStat(stat);
+        float otherStat = other.myStats.GetStat(stat);
+        if (myStat < otherStat)
+            myStats.ChangeStat(stat, (otherStat - myStat) * statTransferPercentage);
     }
 
     void OnDayEnd(object sender, DayEndEventArgs dea)

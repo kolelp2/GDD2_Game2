@@ -10,6 +10,13 @@ public class Mover : MonoBehaviour {
         get { return maxMoveSpeed; }
     }
     Vector2 velocity = new Vector2(0, 0);
+    public Vector2 Velocity
+    {
+        get
+        {
+            return new Vector2(velocity.x, velocity.y);
+        }
+    }
     Vector2 targetVelocity = new Vector2(0, 0);
     float turnSpeed = 5.0f;
     void Awake()

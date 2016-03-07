@@ -91,9 +91,15 @@ public class Zombie : MonoBehaviour {
         
     } 
 
-    public void Tag()
+    public void Tag(float failRate, out bool success)
     {
-        myGOT.ReportDeath(this, ObjectType.Zombie);
-        Destroy(gameObject);
+        success = false;
+        //zombie rolls. If it's below the provided fail rate, the zombie lives
+        if (!(UnityEngine.Random.value < failRate))
+        {
+            success = true;
+            myGOT.ReportDeath(this, ObjectType.Zombie);
+            Destroy(gameObject);
+        }
     }
 }

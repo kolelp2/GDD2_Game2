@@ -13,7 +13,7 @@ public class Stats : MonoBehaviour {
 	void Start () {
 	    for(int c = 0; c < stats.Length; c++)
         {
-            stats[c] = UnityEngine.Random.Range(rawStatMin, rawStatMax);
+            stats[c] = (c == (int)StatTypes.InheritedStrength) ? 0 : UnityEngine.Random.Range(rawStatMin, rawStatMax);
         }
 	}
 	
