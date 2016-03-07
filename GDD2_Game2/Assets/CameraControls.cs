@@ -30,7 +30,7 @@ public class CameraControls : MonoBehaviour
             //increment target zoom
             targetOrtho -= scroll * zoomSpeed;
             //clamp
-            //targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
+            targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
         }
 
         //move toward target zoom
@@ -43,6 +43,8 @@ public class CameraControls : MonoBehaviour
         if (Input.GetKey(KeyCode.A)) cameraMovement += new Vector2(-panSpeed, 0);
         if (Input.GetKey(KeyCode.S)) cameraMovement += new Vector2(0, -panSpeed);
         if (Input.GetKey(KeyCode.D)) cameraMovement += new Vector2(panSpeed, 0);
+        if (Input.GetKey(KeyCode.Z)) targetOrtho -= .1f * zoomSpeed;
+        else if (Input.GetKey(KeyCode.X)) targetOrtho += .1f * zoomSpeed;
 
         //exit game
         if (Input.GetKey(KeyCode.Escape)) Application.Quit();

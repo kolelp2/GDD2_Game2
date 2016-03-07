@@ -48,7 +48,7 @@ public class Zombie : MonoBehaviour {
             if (Time.frameCount-lastAttack>attackCD &&(target.transform.position - transform.position).sqrMagnitude <= reach)
             {
                 lastAttack = Time.frameCount;
-                target.Tag();
+                target.Tag(UnityEngine.Random.value);
             }
             //if we have a target, chase it
             myMover.SetVelocity(target.transform.position - transform.position, 1);
@@ -91,9 +91,15 @@ public class Zombie : MonoBehaviour {
         
     } 
 
-    public void Tag()
+    public void Tag(float failRate, out bool success)
     {
-        myGOT.ReportDeath(this, ObjectType.Zombie);
-        Destroy(gameObject);
+        success = false;
+        //zombie rolls. If it's below the provided fail rate, the zombie lives
+        if (!(UnityEngine.Random.value < failRate))
+        {
+            success = true;
+            myGOT.ReportDeath(this, ObjectType.Zombie);
+            Destroy(gameObject);
+        }
     }
 }

@@ -19,6 +19,10 @@ public class CPManager : MonoBehaviour {
     int recalcInterval = 5;
     [SerializeField]
     int vfPrecision = 1;
+    [SerializeField]
+    float cpRadius = 100.0f;
+    [SerializeField]
+    float cpDeadZone = 10.0f;
 
     void Awake()
     {
@@ -48,7 +52,7 @@ public class CPManager : MonoBehaviour {
         //debug lines
         /*for (int n = 0; n < vectorField.GetLength(0); n++)
             for (int c = 0; c < vectorField.GetLength(1); c++)
-                Debug.DrawRay(VFToWorldSpace(new Vector3(n, c, 0)), (Vector3)vectorField[n, c].normalized, Color.green, Time.deltaTime);*/
+                Debug.DrawRay(mi.GridToWorldSpace((new Vector3(n, c, 0)), vfPrecision), (Vector3)vectorField[n, c].normalized, Color.green, Time.deltaTime);*/
 
         //check for queued VF recalculations at every x frames (where x is recalcInterval)
         if (recalculateVF && Time.frameCount % recalcInterval == 0)
@@ -80,7 +84,7 @@ public class CPManager : MonoBehaviour {
         int calculationsPerFrame = (int)Math.Ceiling((vfSize.x * vfSize.y) / recalcInterval);
 
         //holds the vectors from current point to each control point
-        Vector2[] cpVectors = new Vector2[CPs.Count];
+        List<Vector2> cpVectors = new List<Vector2>(CPs.Count);
         ControlPoint[] cps = new ControlPoint[CPs.Count];
         CPs.CopyTo(cps);
 
@@ -90,7 +94,7 @@ public class CPManager : MonoBehaviour {
             for (int col = 0; col < vectorField.GetLength(1); col++)
             {
                 //reinitialize cp vectors
-                Array.Clear(cpVectors, 0, cpVectors.Length);
+                cpVectors.Clear();
 
                 //get the current point in VF space
                 Vector2 p = new Vector2(row, col);
@@ -100,16 +104,25 @@ public class CPManager : MonoBehaviour {
                 Vector2 firstCPVector = new Vector2(0,0);
                 //iterate through length of cp list
                 int c = 0;
+                int numInRange = 0;
                 foreach(ControlPoint cp in cps)
                 {
                     //ControlPoint cp = [c];
                     Vector2 cpPosition = mi.WorldToGridSpace(new Vector2(cp.transform.position.x, cp.transform.position.y), vfPrecision);
                     //cp vector is vector from position to cp position
-                    cpVectors[c] = cpPosition - p;
+                    Vector2 cpPositionRelativeToGridPoint = cpPosition - p;
                     c++;
+                    if ((cpPositionRelativeToGridPoint.sqrMagnitude < (cpRadius / vfPrecision) * (cpRadius / vfPrecision))
+                        && !(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
+                    {
+                        cpVectors.Add(cpPositionRelativeToGridPoint);
+                        numInRange++;
+                    }
+                    else
+                        continue;
 
                     //check for new longest magnitude
-                    if (cpPosition.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPosition.sqrMagnitude;
+                    if (cpPositionRelativeToGridPoint.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPositionRelativeToGridPoint.sqrMagnitude;
                 }
 
                 //we'll multiply all vectors by a scale factor so that the closest ones matter more
@@ -118,13 +131,17 @@ public class CPManager : MonoBehaviour {
                 Vector2 calculatedVector = new Vector2(0, 0);
 
                 //if there's only one CP, don't apply scale factor
-                if (cpVectors.Length == 1)
+                if (cpVectors.Count == 1 || numInRange == 1)
                     calculatedVector = cpVectors[0];
                 //otherwise...
                 else
                     //add all scaled cp vectors
-                    foreach (Vector2 v in cpVectors)
-                        calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
+                    for (int n = 0; n < cpVectors.Count; n++)
+                    {
+                        Vector2 v = cpVectors[n];
+                        if (v != Vector2.zero)
+                            calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
+                    }
 
                 //final vector is the sum normalized
                 vectorField[row, col] = calculatedVector;

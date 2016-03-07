@@ -103,7 +103,11 @@ public class MapInfo : MonoBehaviour {
         return IsWorldPosOnMap(gridPos);
     }
 
-    
+    //TODO
+    public static Vector2 GetCircumcenter(Vector2 p1, Vector2 p2, Vector2 p3)
+    {
+        return new Vector2();
+    }
 }
 
 public class DayEndEventArgs : EventArgs
