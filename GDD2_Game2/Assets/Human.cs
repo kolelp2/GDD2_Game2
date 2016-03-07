@@ -58,12 +58,17 @@ public class Human : MonoBehaviour {
     static int attackCD = 2;
     int lastAttack = 0;
     float attackRange = 1f;
+    //the amount of skill required to evade tags 50% of the time
+    static float skillFor50Percent = 50f;
+    static float skillPerEvade = .5f;
+    static float skillPerKill = 2f;
     #endregion
 
     #region members
     //other components
     Mover myMover; //on the human
     GOTracker myGOT; //not on the human
+    Stats myStats;
 
     //nearby actors
     List<MonoBehaviour> nearbyZombies = new List<MonoBehaviour>();
@@ -169,6 +174,15 @@ public class Human : MonoBehaviour {
             return closest;
         }
     }
+
+    float EvadeChance
+    {
+        get
+        {
+            float currentSkill = myStats.GetStat(StatTypes.Skill);
+            return skillFor50Percent / (currentSkill + skillFor50Percent);
+        }
+    }
     #endregion
 
     // Use this for initialization
@@ -177,6 +191,7 @@ public class Human : MonoBehaviour {
         myMover = (Mover)GetComponent(typeof(Mover));
         GameObject map = GameObject.Find("Map");
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
+        myStats = (Stats)gameObject.GetComponent(typeof(Stats));
 
         //subscribe to day events
         MapInfo.DayEndEvent += OnDayEnd;
@@ -506,8 +521,13 @@ public class Human : MonoBehaviour {
         }
     }
 
-    public void Tag()
+    public void Tag(float atkValue)
     {
+        if(atkValue<0 || atkValue>EvadeChance)
+        {
+            myStats.ChangeStat(StatTypes.Skill, skillPerEvade);
+            return;
+        }
         //change color
         SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
         sr.color = new Color(189.0f / 255.0f, 189.0f / 255.0f, 189.0f / 255.0f);

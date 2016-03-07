@@ -48,7 +48,7 @@ public class Zombie : MonoBehaviour {
             if (Time.frameCount-lastAttack>attackCD &&(target.transform.position - transform.position).sqrMagnitude <= reach)
             {
                 lastAttack = Time.frameCount;
-                target.Tag();
+                target.Tag(UnityEngine.Random.value);
             }
             //if we have a target, chase it
             myMover.SetVelocity(target.transform.position - transform.position, 1);
