@@ -1,13 +1,11 @@
 fileFormatVersion: 2
-guid: a460f7215d7ce0a4caf14ea1fca63868
-timeCreated: 1457043418
+guid: 3bc7a2c80345e0842b91ba9dcd7b6de4
+timeCreated: 1457567555
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
-    21300000: characterWalking_human_0
-    21300002: characterWalking_human_1
-    21300004: characterWalking_human_2
-    21300006: characterWalking_human_3
+    21300000: zombieWalking_2Frame_0
+    21300002: zombieWalking_2Frame_1
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -54,7 +52,7 @@ TextureImporter:
   buildTargetSettings: []
   spriteSheet:
     sprites:
-    - name: characterWalking_human_0
+    - name: zombieWalking_2Frame_0
       rect:
         serializedVersion: 2
         x: 0
@@ -64,30 +62,10 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_human_1
-      rect:
-        serializedVersion: 2
-        x: 256
-        y: 256
-        width: 256
-        height: 256
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_human_2
+    - name: zombieWalking_2Frame_1
       rect:
         serializedVersion: 2
         x: 0
-        y: 0
-        width: 256
-        height: 256
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_human_3
-      rect:
-        serializedVersion: 2
-        x: 256
         y: 0
         width: 256
         height: 256

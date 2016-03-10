@@ -9,7 +9,8 @@ public class Fuel : ResourceNode {
     [SerializeField]
     public readonly static float harvestRange = .3f;
     static float drawDepth = -.5f;
-    public override float HarvestRange
+    public override float HarvestRange    
+
     {
         get { return harvestRange; }
     }
@@ -17,13 +18,20 @@ public class Fuel : ResourceNode {
     {
         get { return ResourceType.FuelRaw; }
     }
+
     // Use this for initialization
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
         transform.position += new Vector3(0, 0, drawDepth);
 
         //we can't report in start because the GOT might not be ready, so we put it off till the second frame
-        StartCoroutine(LateStart());        
+        StartCoroutine(LateStart());
+
+        //initializing random fuel sprites
+        int fuelSelectInt = Random.Range(1, 3);
+
+        SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
+        sr.sprite = Resources.Load("resource_tree_" + (fuelSelectInt.ToString()), typeof(Sprite)) as Sprite;
     }
 
     IEnumerator LateStart()

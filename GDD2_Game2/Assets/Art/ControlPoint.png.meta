@@ -1,13 +1,13 @@
 fileFormatVersion: 2
-guid: aeac00d932bd90d4ea2068709cfdcdf9
-timeCreated: 1457043398
+guid: 833617df894217c458e949fcc5e6474c
+timeCreated: 1457565863
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
-    21300000: characterWalking_zombie_0
-    21300002: characterWalking_zombie_1
-    21300004: characterWalking_zombie_2
-    21300006: characterWalking_zombie_3
+    21300000: ControlPoint_0
+    21300002: ControlPoint_1
+    21300004: ControlPoint_2
+    21300006: ControlPoint_3
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -48,13 +48,13 @@ TextureImporter:
   alignment: 0
   spritePivot: {x: .5, y: .5}
   spriteBorder: {x: 0, y: 0, z: 0, w: 0}
-  spritePixelsToUnits: 300
+  spritePixelsToUnits: 500
   alphaIsTransparency: 1
   textureType: 8
   buildTargetSettings: []
   spriteSheet:
     sprites:
-    - name: characterWalking_zombie_0
+    - name: ControlPoint_0
       rect:
         serializedVersion: 2
         x: 0
@@ -64,7 +64,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_zombie_1
+    - name: ControlPoint_1
       rect:
         serializedVersion: 2
         x: 256
@@ -74,7 +74,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_zombie_2
+    - name: ControlPoint_2
       rect:
         serializedVersion: 2
         x: 0
@@ -84,7 +84,7 @@ TextureImporter:
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
-    - name: characterWalking_zombie_3
+    - name: ControlPoint_3
       rect:
         serializedVersion: 2
         x: 256

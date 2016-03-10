@@ -543,7 +543,16 @@ public class Human : MonoBehaviour {
         }
         //change color
         SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
-        sr.color = new Color(189.0f / 255.0f, 189.0f / 255.0f, 189.0f / 255.0f);
+        sr.color = new Color(127.0f / 255.0f, 249.0f / 255.0f, 209.0f / 255.0f);
+
+
+        //Failed attempt at changing the sprite and animator controller at in game
+
+        //sr.sprite = (Sprite) Resources.Load("zombieWalking_2Frame_0");
+        //Animator animator = (Animator)gameObject.GetComponent(typeof(Animator));
+        //animator.runtimeAnimatorController = (RuntimeAnimatorController) Resources.Load("zombieWalking_2Frame_0.controller");
+
+
         //report death to GO tracker
         myGOT.ReportDeath(this, (int)ObjectType.Human);
         //add zombie script
