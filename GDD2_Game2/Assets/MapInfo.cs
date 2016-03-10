@@ -103,10 +103,16 @@ public class MapInfo : MonoBehaviour {
         return IsWorldPosOnMap(gridPos);
     }
 
-    //TODO
-    public static Vector2 GetCircumcenter(Vector2 p1, Vector2 p2, Vector2 p3)
+    //returns the centroid of an array of points
+    public static Vector2 GetCentroid(Vector2[] points)
     {
-        return new Vector2();
+        Vector2 sum = Vector2.zero;
+        for (int c = 0; c < points.Length; c++)
+        {
+            sum += points[c];
+        }
+        return sum / points.Length;
+
     }
 }
 

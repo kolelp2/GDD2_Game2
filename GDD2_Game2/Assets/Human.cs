@@ -64,6 +64,7 @@ public class Human : MonoBehaviour {
     static float skillPerKill = 2f;
     static float statTransferPercentage = .05f;
     static float staminaPerSecond = .5f;
+    static int campingFrames = 3;
     #endregion
 
     #region members
@@ -104,6 +105,9 @@ public class Human : MonoBehaviour {
 
     //are we panicking?
     bool panic = false;
+
+    //are we trying to place a camp?
+    bool camping = false;
     #endregion
 
     #region properties
@@ -340,12 +344,40 @@ public class Human : MonoBehaviour {
 
             //get the closest of each resource node
             Vector2?[] closestNodes = nearestNodesByType; //null means we don't have any nodes of that type
+            bool allNodeTypesKnown = true;
             for (int c = 0; c < needed.Length; c++)
-                if(closestNodes[c]== null) //double check with a long search if null
-                    closestNodes[c] = ScanForNearestNodeOfType(c);            
+                if (closestNodes[c] == null) //double check with a long search if null
+                {
+                    closestNodes[c] = ScanForNearestNodeOfType(c);
+                    if (closestNodes[c] == null)
+                        allNodeTypesKnown = false;
+                }
 
+            //if we know no camps
+            if (nearestCamp == null)
+            {
+                //and we know one of each node type
+                if (allNodeTypesKnown)
+                {
+                    //convert to non-nullable type
+                    Vector2[] closestNodesNotNullable = new Vector2[closestNodes.Length];
+                    for (int c = 0; c < closestNodes.Length; c++)
+                        closestNodesNotNullable[c] = closestNodes[c].Value;
+
+                    //get circumcenter of closest known nodes
+                    Vector2 campPos = MapInfo.GetCentroid(closestNodesNotNullable);
+                    //if we're there
+                    if (!camping && (campPos - (Vector2)transform.position).sqrMagnitude < targetPosTolerance * targetPosTolerance)
+                    {
+                        StartCoroutine(PlaceCamp(campingFrames));
+                    }
+                    //if we're not, go there
+                    else
+                        targetPos = campPos;
+                }
+            }
             //if I need any...
-            if (Array.IndexOf(needed, true) != -1)
+            else if (Array.IndexOf(needed, true) != -1)
             {
                 //closest node of a type we need
                 Vector2? closestNode = null;
@@ -489,6 +521,25 @@ public class Human : MonoBehaviour {
             campLocations.Add(mb.gameObject.transform.position);
     }
 
+    IEnumerator PlaceCamp(int waitFrames)
+    {
+        camping = true;
+        for (int c = 0; c < waitFrames; c++)
+        {
+            CampCheck();
+            yield return null;
+        }
+        CampCheck();
+        if (nearestCamp == null)
+        {
+            //then place one, add it to camp locations, and mark it as our new closest camp
+            Instantiate(Resources.Load("Camp"), transform.position, Quaternion.identity);
+            campLocations.Add(transform.position);
+            nearestCamp = transform.position;
+        }
+        camping = false;
+    }
+
     void Actions()
     {
         //deposit into and request from any camps in range
@@ -527,7 +578,7 @@ public class Human : MonoBehaviour {
                 float requestAmt = carryingCapacity - inventory[(int)rn.ResourceType]; //request enough to get you to your carrying capacity
                 float gatherAmt = rn.Harvest(requestAmt); //save the actual amount harvested
                 inventory[(int)rn.ResourceType] += gatherAmt; //add amount harvested to inventory
-                                                              //less harvested thhan requested means the node ran dry
+                //less harvested thhan requested means the node ran dry
                 if (gatherAmt < requestAmt) //add it to dead locations
                     deadLocations.Add(rn.gameObject.transform.position);
             }

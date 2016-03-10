@@ -25,8 +25,9 @@ public class Camp : MonoBehaviour {
         initialScale = mySR.transform.localScale;
         for (int c = 0; c < inventory.Length; c++)
             inventory[c] = 0;
-        StartCoroutine(LateStart());
+        //StartCoroutine(LateStart());
         transform.position += new Vector3(0, 0, drawDepth);
+        myGOT.Report(this, ObjectType.Camp);
     }
 
     IEnumerator LateStart()
