@@ -198,6 +198,7 @@ public class Human : MonoBehaviour {
         GameObject map = GameObject.Find("Map");
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
         myStats = (Stats)gameObject.GetComponent(typeof(Stats));
+        myGOT.ReportCreation(ObjectType.Human);
 
         //subscribe to day events
         MapInfo.DayEndEvent += OnDayEnd;
@@ -523,16 +524,29 @@ public class Human : MonoBehaviour {
 
     IEnumerator PlaceCamp(int waitFrames)
     {
+        //mark that we're placing a camp
         camping = true;
+        //on each wait frame
         for (int c = 0; c < waitFrames; c++)
         {
+            //check for camps
             CampCheck();
-            yield return null;
+            //if one is found, stop camping and break
+            if (nearestCamp != null)
+            {
+                camping = false;
+                yield break;
+            }
+            //otherwise wait another rame
+            else
+                yield return null;
         }
+        //after all wait frames, check again
         CampCheck();
+        //if a camp still isn't found
         if (nearestCamp == null)
         {
-            //then place one, add it to camp locations, and mark it as our new closest camp
+            //place one, add it to camp locations, and mark it as our new closest camp
             Instantiate(Resources.Load("Camp"), transform.position, Quaternion.identity);
             campLocations.Add(transform.position);
             nearestCamp = transform.position;

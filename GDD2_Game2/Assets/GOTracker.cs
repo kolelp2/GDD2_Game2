@@ -5,6 +5,7 @@ using System;
 public class GOTracker : MonoBehaviour {
     Dictionary<Vector2,List<MonoBehaviour>>[] objDictionary;
     Dictionary<MonoBehaviour, Vector2> unitWorldPositions = new Dictionary<MonoBehaviour, Vector2>();
+    int[] unitCountsByType = new int[Enum.GetValues(typeof(ObjectType)).Length];
 
     public readonly static int resourceNodeTypeCount = 3;
 
@@ -105,6 +106,14 @@ public class GOTracker : MonoBehaviour {
         }
         unitWorldPositions[mb] = mb.gameObject.transform.position;
     }
+    public int GetUnitCount(ObjectType type)
+    {
+        return unitCountsByType[(int)type];
+    }
+    public void ReportCreation(ObjectType newThingType)
+    {
+        unitCountsByType[(int)newThingType]++;
+    }
 
     public void ReportDeath(MonoBehaviour dt, ObjectType dtType)
     {
@@ -116,7 +125,7 @@ public class GOTracker : MonoBehaviour {
         //report first to make sure we have the latest info
         Report(deadThing, deadThingType);
 
-        //remove the dead thing from the object dictionary and the position dictionary
+        //remove the dead thing from the object dictionary, the position dictionary, and the count list
         if (deadThingType<objDictionary.Length)
         {
             Vector2 deadThingGridPos = mi.WorldToGridIndex(deadThing.gameObject.transform.position, mapPrecision);
@@ -125,6 +134,8 @@ public class GOTracker : MonoBehaviour {
             typeList[deadThingGridPos].Remove(deadThing);
         }
         unitWorldPositions.Remove(deadThing);
+        if (unitCountsByType[deadThingType] > 0)
+            unitCountsByType[deadThingType]--;
     }
 
     //public Vector2 World

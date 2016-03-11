@@ -105,6 +105,7 @@ public class CPManager : MonoBehaviour {
                 //iterate through length of cp list
                 int c = 0;
                 int numInRange = 0;
+                bool inDeadZone = false;
                 foreach(ControlPoint cp in cps)
                 {
                     //ControlPoint cp = [c];
@@ -112,11 +113,20 @@ public class CPManager : MonoBehaviour {
                     //cp vector is vector from position to cp position
                     Vector2 cpPositionRelativeToGridPoint = cpPosition - p;
                     c++;
-                    if ((cpPositionRelativeToGridPoint.sqrMagnitude < (cpRadius / vfPrecision) * (cpRadius / vfPrecision))
-                        && !(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
+                    if ((cpPositionRelativeToGridPoint.sqrMagnitude < (cpRadius / vfPrecision) * (cpRadius / vfPrecision)))
                     {
-                        cpVectors.Add(cpPositionRelativeToGridPoint);
-                        numInRange++;
+                        //if the cp is farther than the deadzone radius, we're good
+                        if (!(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
+                        {
+                            cpVectors.Add(cpPositionRelativeToGridPoint);
+                            numInRange++;
+                        }
+                        //otherwise, mark that this point is dead and break
+                        else
+                        {
+                            inDeadZone = true;
+                            break;
+                        }
                     }
                     else
                         continue;
@@ -129,19 +139,22 @@ public class CPManager : MonoBehaviour {
                 //furthest vector is 0, <0,0> is 1
                 //float scaleFactorBase = 1 - (1 / longestMagnitude);
                 Vector2 calculatedVector = new Vector2(0, 0);
-
-                //if there's only one CP, don't apply scale factor
-                if (cpVectors.Count == 1 || numInRange == 1)
-                    calculatedVector = cpVectors[0];
-                //otherwise...
-                else
-                    //add all scaled cp vectors
-                    for (int n = 0; n < cpVectors.Count; n++)
-                    {
-                        Vector2 v = cpVectors[n];
-                        if (v != Vector2.zero)
-                            calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
-                    }
+                //leave the vector at 0,0 if the point is in a dead zone
+                if (!inDeadZone)
+                {
+                    //if there's only one CP, don't apply scale factor
+                    if (cpVectors.Count == 1 || numInRange == 1)
+                        calculatedVector = cpVectors[0];
+                    //otherwise...
+                    else
+                        //add all scaled cp vectors
+                        for (int n = 0; n < cpVectors.Count; n++)
+                        {
+                            Vector2 v = cpVectors[n];
+                            if (v != Vector2.zero)
+                                calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
+                        }
+                }
 
                 //final vector is the sum normalized
                 vectorField[row, col] = calculatedVector;
