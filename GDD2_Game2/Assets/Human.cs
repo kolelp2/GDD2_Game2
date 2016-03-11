@@ -108,6 +108,9 @@ public class Human : MonoBehaviour {
 
     //are we trying to place a camp?
     bool camping = false;
+
+    //wander direction
+    Vector2? wanderDirection = null;
     #endregion
 
     #region properties
@@ -376,6 +379,14 @@ public class Human : MonoBehaviour {
                     else
                         targetPos = campPos;
                 }
+                //and we don't know one of each node type
+                else
+                {
+                    //wander
+                    if (wanderDirection == null)
+                        wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+                    targetPos = (Vector2)transform.position + wanderDirection * 50;
+                }
             }
             //if I need any...
             else if (Array.IndexOf(needed, true) != -1)
@@ -423,8 +434,9 @@ public class Human : MonoBehaviour {
                 else if (!(closestCampIsWalkable || closestNodeIsWalkable))
                 {
                     //if nothing is walkable, wander
-                    if (targetPos == null)
-                        targetPos = (Vector2)transform.position + UnityEngine.Random.insideUnitCircle.normalized * 50;
+                    if (wanderDirection == null)
+                        wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+                    targetPos = (Vector2)transform.position + wanderDirection * 50;
                 }
                 //if both are walkable...
                 else
