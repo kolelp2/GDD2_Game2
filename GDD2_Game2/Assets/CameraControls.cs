@@ -29,9 +29,10 @@ public class CameraControls : MonoBehaviour
         {
             //increment target zoom
             targetOrtho -= scroll * zoomSpeed;
-            //clamp
-            targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
         }
+
+        //clamp
+        targetOrtho = Mathf.Clamp(targetOrtho, minOrtho, maxOrtho);
 
         //move toward target zoom
         Camera.main.orthographicSize = Mathf.MoveTowards(Camera.main.orthographicSize, targetOrtho, smoothSpeed * Time.deltaTime);
