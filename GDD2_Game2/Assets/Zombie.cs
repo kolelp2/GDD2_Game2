@@ -27,6 +27,7 @@ public class Zombie : MonoBehaviour {
         GameObject map = GameObject.Find("Map");
         myCPM = (CPManager)map.GetComponent(typeof(CPManager));
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
+        myGOT.ReportCreation(ObjectType.Zombie);
         updateSeed = (int)Math.Round(UnityEngine.Random.value * (updateInterval-1));
 	}
 	
