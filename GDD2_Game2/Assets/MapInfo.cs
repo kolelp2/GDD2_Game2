@@ -102,6 +102,13 @@ public class MapInfo : MonoBehaviour {
         gridPos = GridToWorldSpace(gridPos, gridPrecision);
         return IsWorldPosOnMap(gridPos);
     }
+    //returns a random world position that's within the bounds of the map
+    public Vector2 GetRandomMapPosAsWorldPos()
+    {
+        float x = UnityEngine.Random.Range(0, mapSize.x) + mapPos.x;
+        float y = UnityEngine.Random.Range(0, mapSize.y) + mapPos.y;
+        return new Vector2(x, y);
+    }
 
     //returns the centroid of an array of points
     public static Vector2 GetCentroid(Vector2[] points)

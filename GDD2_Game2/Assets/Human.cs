@@ -44,6 +44,8 @@ public class Human : MonoBehaviour {
     [SerializeField]
     static int actionInterval = 30;
     int actionSeed;
+    static int locationPruneInterval = 60;
+    int locationPruneSeed;
     [SerializeField]
     static int campDelay = 200;
     [SerializeField]
@@ -108,6 +110,9 @@ public class Human : MonoBehaviour {
 
     //are we trying to place a camp?
     bool camping = false;
+
+    //wander direction
+    Vector2? wanderDirection = null;
     #endregion
 
     #region properties
@@ -225,6 +230,7 @@ public class Human : MonoBehaviour {
         actionSeed = (int)Math.Round(UnityEngine.Random.value * (actionInterval-1));
         reportSeed = (int)Math.Round(UnityEngine.Random.value * (reportInterval-1));
         moveSeed = (int)Math.Round(UnityEngine.Random.value * (moveInterval-1));
+        locationPruneSeed = (int)Math.Round(UnityEngine.Random.value * (locationPruneInterval - 1));
     }
 	
 	// Update is called once per frame
@@ -284,8 +290,8 @@ public class Human : MonoBehaviour {
         //resource node checks
         #region node check
         int resourceNodeCheckMod = Time.frameCount % resourceNodeCheckInterval; //save the mod
-        for(int c = 0;c<resourceNodeCheckSeed.Length;c++)//if the mod matches one of the seeds
-            if(!panic && (resourceNodeCheckMod == resourceNodeCheckSeed[c]))
+        for (int c = 0; c < resourceNodeCheckSeed.Length; c++)//if the mod matches one of the seeds
+            if (!panic && (resourceNodeCheckMod == resourceNodeCheckSeed[c]))
             {
                 //add any in-range nodes of that resource to our hash set
                 nearbyResourceNodes = myGOT.GetObjsInRange(transform.position, resourceNodeCheckDistance, c);
@@ -293,6 +299,19 @@ public class Human : MonoBehaviour {
                 {
                     resourceLocationsByType[c].Add(mb.gameObject.transform.position);
                     harvestRangesByResourceType[c] = mb.HarvestRange;
+                }
+                //check nearest node against nearby nodes to prune dead nodes
+                //if we have a node of this type, and it's within half our check distance
+                if (nearestNodesByType[c] != null && (nearestNodesByType[c].Value - (Vector2)transform.position).sqrMagnitude < (resourceNodeCheckDistance / 2) * (resourceNodeCheckDistance / 2))
+                {
+                    //try to find it in our nearest node collection
+                    bool isPresent = false;
+                    foreach (MonoBehaviour node in nearbyResourceNodes)
+                        if (node != null && (Vector2)node.transform.position == nearestNodesByType[c].Value)
+                            isPresent = true;
+                    //if we can't, mark it as dead
+                    if (!isPresent)
+                        deadLocations.Add(nearestNodesByType[c].Value);
                 }
             }
         #endregion
@@ -321,6 +340,9 @@ public class Human : MonoBehaviour {
             Actions();
         #endregion
 
+        //location pruning
+        
+
         //decision making
         #region decision making
         if (!panic && (targetPos == null || Time.frameCount % decisionMakingInterval == decisionMakingSeed))
@@ -329,8 +351,14 @@ public class Human : MonoBehaviour {
             foreach (Vector2 deadLocation in deadLocations)
             {
                 for (int c = 0; c < resourceLocationsByType.Length; c++)
+                {
                     resourceLocationsByType[c].Remove(deadLocation);
+                    if (nearestNodesByType[c] == deadLocation)
+                        nearestNodesByType[c] = null;
+                }
                 campLocations.Remove(deadLocation);
+                if (nearestCamp == deadLocation)
+                    nearestCamp = null;
                 deadLocationsArchive.Add(deadLocation); //make sure to add each dead location to the archive
             }
 
@@ -353,29 +381,32 @@ public class Human : MonoBehaviour {
                     if (closestNodes[c] == null)
                         allNodeTypesKnown = false;
                 }
-
-            //if we know no camps
-            if (nearestCamp == null)
+            //if we don't have one of each node type
+            if (!allNodeTypesKnown)
             {
-                //and we know one of each node type
-                if (allNodeTypesKnown)
-                {
-                    //convert to non-nullable type
-                    Vector2[] closestNodesNotNullable = new Vector2[closestNodes.Length];
-                    for (int c = 0; c < closestNodes.Length; c++)
-                        closestNodesNotNullable[c] = closestNodes[c].Value;
+                //wander until we do
+                if (wanderDirection == null)
+                    wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+                targetPos = (Vector2)transform.position + wanderDirection * 50;
+            }
+            //if we have all the node types but no camp
+            else if (nearestCamp == null)
+            {
+                //convert to non-nullable type
+                Vector2[] closestNodesNotNullable = new Vector2[closestNodes.Length];
+                for (int c = 0; c < closestNodes.Length; c++)
+                    closestNodesNotNullable[c] = closestNodes[c].Value;
 
-                    //get circumcenter of closest known nodes
-                    Vector2 campPos = MapInfo.GetCentroid(closestNodesNotNullable);
-                    //if we're there
-                    if (!camping && (campPos - (Vector2)transform.position).sqrMagnitude < targetPosTolerance * targetPosTolerance)
-                    {
-                        StartCoroutine(PlaceCamp(campingFrames));
-                    }
-                    //if we're not, go there
-                    else
-                        targetPos = campPos;
+                //get circumcenter of closest known nodes
+                Vector2 campPos = MapInfo.GetCentroid(closestNodesNotNullable);
+                //if we're there
+                if (!camping && (campPos - (Vector2)transform.position).sqrMagnitude < targetPosTolerance * targetPosTolerance)
+                {
+                    StartCoroutine(PlaceCamp(campingFrames));
                 }
+                //if we're not, go there
+                else
+                    targetPos = campPos;
             }
             //if I need any...
             else if (Array.IndexOf(needed, true) != -1)
@@ -423,8 +454,9 @@ public class Human : MonoBehaviour {
                 else if (!(closestCampIsWalkable || closestNodeIsWalkable))
                 {
                     //if nothing is walkable, wander
-                    if (targetPos == null)
-                        targetPos = (Vector2)transform.position + UnityEngine.Random.insideUnitCircle.normalized * 50;
+                    if (wanderDirection == null)
+                        wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+                    targetPos = (Vector2)transform.position + wanderDirection * 50;
                 }
                 //if both are walkable...
                 else
@@ -447,7 +479,7 @@ public class Human : MonoBehaviour {
                 }
             }
             //if I don't need any, but can carry more...
-            else if(Array.IndexOf(canCarryMore, true) != -1)
+            else if (Array.IndexOf(canCarryMore, true) != -1)
             {
                 //closest node of a type we need
                 Vector2? closestNode = null;
