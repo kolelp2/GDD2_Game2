@@ -56,6 +56,7 @@
      <Compile Include="Assets\MapInfo.cs" />
      <Compile Include="Assets\Mover.cs" />
      <Compile Include="Assets\Stats.cs" />
+     <Compile Include="Assets\UI.cs" />
      <Compile Include="Assets\Water.cs" />
      <Compile Include="Assets\Zombie.cs" />
      <Compile Include="Assets\buttonScript.cs" />
