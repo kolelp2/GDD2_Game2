@@ -99,8 +99,8 @@ public class MapInfo : MonoBehaviour {
 
     public bool IsGridPosOnMap(Vector2 gridPos, int gridPrecision)
     {
-        gridPos = GridToWorldSpace(gridPos, gridPrecision);
-        return IsWorldPosOnMap(gridPos);
+        Vector2 mapSizeInGridPos = new Vector2(Mathf.Floor(mapSize.x / gridPrecision), Mathf.Floor(mapSize.y / gridPrecision));
+        return !(gridPos.x < 0 || gridPos.x >= mapSizeInGridPos.x-1 || gridPos.y < 0 || gridPos.y >= mapSizeInGridPos.y-1);
     }
     //returns a random world position that's within the bounds of the map
     public Vector2 GetRandomMapPosAsWorldPos()
