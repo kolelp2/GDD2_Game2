@@ -12,7 +12,7 @@ public class Zombie : MonoBehaviour {
     [SerializeField]
     float viewDistance = 5.0f;
     [SerializeField]
-    int chaseTime = 7;
+    int chaseTime = 1;
     [SerializeField]
     float reach = .1f;
     [SerializeField]
@@ -20,6 +20,9 @@ public class Zombie : MonoBehaviour {
     int updateSeed;
     static int attackCD = 2;
     int lastAttack = 0;
+    //ratio between distance to nearest CP and distance to target below which the cp will be preferred
+    //so a ratio of 3 means that the nearest control point will be preferred if it is less than 3 times as far away as the target
+    static float cpBoundingRatio = 1;
     
 	// Use this for initialization
 	void Start () {
@@ -46,13 +49,19 @@ public class Zombie : MonoBehaviour {
         }
         else
         {
+            //tag
             if (Time.frameCount-lastAttack>attackCD &&(target.transform.position - transform.position).sqrMagnitude <= reach)
             {
                 lastAttack = Time.frameCount;
                 target.Tag(UnityEngine.Random.value);
             }
-            //if we have a target, chase it
+            float cpDistanceSqr = myCPM.GetDistanceSqrFromCPAtPos(transform.position);
+            float targetDistanceSqr = ((Vector2)target.transform.position - (Vector2)transform.position).sqrMagnitude;
+
             myMover.SetVelocity(target.transform.position - transform.position, 1);
+            //if the ratio between the distance to the cp and the distance to the target is greater than the bounding ratio, lose the target
+            if (cpDistanceSqr / targetDistanceSqr < cpBoundingRatio)
+                target = null;
         }
 
         if (Time.frameCount % updateInterval == updateSeed+1)
