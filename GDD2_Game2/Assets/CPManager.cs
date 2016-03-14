@@ -124,7 +124,7 @@ public class CPManager : MonoBehaviour {
                         //if the cp is farther than the deadzone radius, we're good
                         if (!(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
                         {
-                            cpVectors.Add(cpPositionRelativeToGridPoint);
+                            cpVectors.Add(cpPositionRelativeToGridPoint*cp.Strength);
                             numInRange++;
                         }
                         //otherwise, mark that this point is dead and break
@@ -252,12 +252,30 @@ public class CPManager : MonoBehaviour {
         recalculateVF = true;
     }
 
-    void OnMouseDown()
+    void OnMouseOver()
     {
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
-        if (mi.IsWorldPosOnMap(newPos))
-            Instantiate(Resources.Load("control point"), newPos, Quaternion.identity);
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
+            if (mi.IsWorldPosOnMap(newPos))
+            {
+                ControlPoint newCP = (ControlPoint)(Instantiate(Resources.Load("control point"), newPos, Quaternion.identity) as GameObject).GetComponent(typeof(ControlPoint));
+                AddCP(newCP);
+            }
+        }
+        else if (Input.GetMouseButtonDown(1))
+        {
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
+            if (mi.IsWorldPosOnMap(newPos))
+            {
+                ControlPoint newCP = (ControlPoint)(Instantiate(Resources.Load("control point"), newPos, Quaternion.identity) as GameObject).GetComponent(typeof(ControlPoint));
+                newCP.Strength = -1;
+                //newCP.SetColor(Color.cyan);
+                AddCP(newCP);
+            }
+        }
     }
 
     

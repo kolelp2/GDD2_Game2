@@ -94,7 +94,7 @@ public class MapInfo : MonoBehaviour {
     {
         //worldPos = WorldToGridSpace(worldPos, gridPrecision);
         worldPos = worldPos - mapPos;
-        return !(worldPos.x > mapSize.x || worldPos.x < 0 || worldPos.y > mapSize.y || worldPos.y < 0);
+        return !(worldPos.x > mapSize.x-1 || worldPos.x < 1 || worldPos.y > mapSize.y-1 || worldPos.y < 1);
     }
 
     public bool IsGridPosOnMap(Vector2 gridPos, int gridPrecision)
