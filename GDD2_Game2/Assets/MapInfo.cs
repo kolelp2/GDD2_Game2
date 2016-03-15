@@ -6,6 +6,10 @@ public class MapInfo : MonoBehaviour {
     [SerializeField]
     public readonly static int DayLengthInSeconds = 600;
     int dayNumber = 0;
+    [SerializeField]
+    float tileSize = 100;
+    [SerializeField]
+    float tileDepth = 1;
     public static float WorldTimeInDays
     {
         get
@@ -32,6 +36,20 @@ public class MapInfo : MonoBehaviour {
         mapSize = mapBox.size;
 
         mapPos = new Vector2(mapBox.transform.position.x - mapBox.size.x / 2, mapBox.transform.position.y - mapBox.size.y / 2);
+
+        int tileX = (int)Math.Ceiling(mapSize.x / tileSize);
+        int tileY = (int)Math.Ceiling(mapSize.y / tileSize);
+        for(int row = 0; row < tileX; row++)
+        {
+            for(int col = 0; col < tileY; col++)
+            {
+                GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile1"), new Vector3(mapPos.x + row * tileSize + tileSize / 2, mapPos.y + col * tileSize + tileSize / 2, tileDepth), Quaternion.identity);
+                SpriteRenderer sr = (SpriteRenderer)newTile.GetComponent(typeof(SpriteRenderer));
+                float ppu = sr.sprite.rect.width / sr.sprite.bounds.size.x;
+                float scale = tileSize / (sr.sprite.rect.width / ppu);
+                newTile.transform.localScale = new Vector3(scale, scale, 1);
+            }
+        }
 	}
 	
 	// Update is called once per frame
