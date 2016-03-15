@@ -196,6 +196,10 @@ public class Human : MonoBehaviour {
     }
     #endregion
 
+    //making public fields to place the zombie sprite and animator into
+    public Sprite ZombieSprite;
+    public RuntimeAnimatorController ZombieAnimator;
+
     // Use this for initialization
     void Start () {
         //grab scripts
@@ -638,9 +642,14 @@ public class Human : MonoBehaviour {
             myStats.ChangeStat(StatTypes.Skill, skillPerEvade);
             return;
         }
-        //change color
+
+        //change sprite and animator
         SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
-        sr.color = new Color(189.0f / 255.0f, 189.0f / 255.0f, 189.0f / 255.0f);
+        sr.sprite = ZombieSprite;
+        Animator animator = (Animator)gameObject.GetComponent(typeof(Animator));
+        animator.runtimeAnimatorController = ZombieAnimator;
+
+
         //report death to GO tracker
         myGOT.ReportDeath(this, (int)ObjectType.Human);
         //add zombie script

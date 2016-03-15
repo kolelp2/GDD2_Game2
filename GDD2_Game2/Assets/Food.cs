@@ -24,6 +24,12 @@ public class Food : ResourceNode
     void Start () {
         myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
         transform.position += new Vector3(0, 0, drawDepth);
+
+        //initializing random food sprites
+        int foodSelectInt = Random.Range(1, 3);
+
+        SpriteRenderer sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
+        sr.sprite = Resources.Load("resource_animal_" + (foodSelectInt.ToString()), typeof(Sprite)) as Sprite;
     }
 	
 	// Update is called once per frame
