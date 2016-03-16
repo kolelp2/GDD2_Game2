@@ -40,6 +40,11 @@ public class Mover : MonoBehaviour {
         //work up to the target velocity over time
         if (Time.frameCount % velocityUpdateInterval == velocityUpdateSeed)
             velocity = (velocity + targetVelocity * turnSpeed * Time.deltaTime * velocityUpdateInterval).normalized * targetVelocity.magnitude;
+        if (velocity != Vector2.zero)
+        {
+            var angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.AngleAxis(angle-90, Vector3.forward);
+        }
 	}
 
     public void SetVelocity(Vector2 direction, float speed)
