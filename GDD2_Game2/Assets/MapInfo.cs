@@ -6,6 +6,15 @@ public class MapInfo : MonoBehaviour {
     [SerializeField]
     public readonly static int DayLengthInSeconds = 600;
     int dayNumber = 0;
+    [SerializeField]
+    int tileDimension = 100;
+    [SerializeField]
+    float tileDepth = 1;
+    [SerializeField]
+    int numberOfTiles = 11;
+    [SerializeField]
+    int altitudeFieldPrecision = 2;
+    float[,] altitudeField;
     public static float WorldTimeInDays
     {
         get
@@ -32,6 +41,57 @@ public class MapInfo : MonoBehaviour {
         mapSize = mapBox.size;
 
         mapPos = new Vector2(mapBox.transform.position.x - mapBox.size.x / 2, mapBox.transform.position.y - mapBox.size.y / 2);
+
+        //place tiles
+        //get number of tiles in both directions
+        int tileX = (int)Math.Ceiling(mapSize.x / tileDimension);
+        int tileY = (int)Math.Ceiling(mapSize.y / tileDimension);
+        Sprite[,] mapSprites = new Sprite[tileX, tileY];
+        //iterate through the 2d tile grid
+        for(int row = 0; row < tileX; row++)
+        {
+            for(int col = 0; col < tileY; col++)
+            {
+                //get a random rotation in 90deg intervals
+                Quaternion rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(0, 4) * 90);
+                //instantate the tile at the current position in the grid
+                //this means transforming from grid space to world space, accounting for the fact that the grid is bottom-left anchored and the tile objects are center-anchored, and correcting for the map's offset
+                GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile" + UnityEngine.Random.Range(1, numberOfTiles)), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), rotation);
+                SpriteRenderer sr = (SpriteRenderer)newTile.GetComponent(typeof(SpriteRenderer));
+                //save the sprites - we'll use them to generate the altitude field
+                mapSprites[row, col] = sr.sprite;
+                //scale the tiles so they conform to our tile dimension
+                float ppu = sr.sprite.rect.width / sr.sprite.bounds.size.x; //this is pixels per unit
+                float scale = tileDimension / (sr.sprite.rect.width / ppu); //desired in unity units over current in unity units - with current in unity units being current pixel width over pixels per unit
+                newTile.transform.localScale = new Vector3(scale, scale, 1);
+            }
+        }
+
+        //generate the altitude field
+        Vector2 altFieldSize = mapSize / altitudeFieldPrecision;
+        altitudeField = new float[(int)altFieldSize.x, (int)altFieldSize.y];
+        for(int row = 0; row < altitudeField.GetLength(0); row++)
+        {
+            for(int col = 0; col < altitudeField.GetLength(1); col++)
+            {
+                //convert position in altitude field to world position
+                Vector2 fieldPointInWorldSpace = GridToWorldSpace(new Vector2(row, col), altitudeFieldPrecision);
+                //convert that world position to a position within the tile grid
+                Vector2 inTileGridSpace = WorldToGridSpace(fieldPointInWorldSpace, tileDimension);
+                //truncate - e.g. (14.2, 1.5) becomes (14, 1) - this will be used as an index
+                Vector2 asGridIndex = new Vector2((float)Math.Truncate(inTileGridSpace.x), (float)Math.Truncate(inTileGridSpace.y));
+                //get the "remainder" of the truncation - e.g. (14.2, 1.5) becomes (.2, .5) - this will be used to locate the proper pixel within the tile
+                Vector2 asTilePercentage = new Vector2(inTileGridSpace.x - asGridIndex.x, inTileGridSpace.y - asGridIndex.y);
+
+                //get the tile
+                Sprite currentTile = mapSprites[(int)asGridIndex.x, (int)asGridIndex.y];
+                //get the color - this is the color of the pixel directly underneath the current field point
+                Color fieldPointColor = currentTile.texture.GetPixel((int)(asTilePercentage.x * currentTile.rect.width), (int)(asTilePercentage.y * currentTile.rect.height));
+
+                altitudeField[row, col] = GetAltitudeForColor(fieldPointColor);
+            }
+        }
+
 	}
 	
 	// Update is called once per frame
@@ -94,13 +154,13 @@ public class MapInfo : MonoBehaviour {
     {
         //worldPos = WorldToGridSpace(worldPos, gridPrecision);
         worldPos = worldPos - mapPos;
-        return !(worldPos.x > mapSize.x || worldPos.x < 0 || worldPos.y > mapSize.y || worldPos.y < 0);
+        return !(worldPos.x > mapSize.x-1 || worldPos.x < 1 || worldPos.y > mapSize.y-1 || worldPos.y < 1);
     }
 
     public bool IsGridPosOnMap(Vector2 gridPos, int gridPrecision)
     {
-        gridPos = GridToWorldSpace(gridPos, gridPrecision);
-        return IsWorldPosOnMap(gridPos);
+        Vector2 mapSizeInGridPos = new Vector2(Mathf.Floor(mapSize.x / gridPrecision), Mathf.Floor(mapSize.y / gridPrecision));
+        return !(gridPos.x < 0 || gridPos.x >= mapSizeInGridPos.x-1 || gridPos.y < 0 || gridPos.y >= mapSizeInGridPos.y-1);
     }
     //returns a random world position that's within the bounds of the map
     public Vector2 GetRandomMapPosAsWorldPos()
@@ -120,6 +180,12 @@ public class MapInfo : MonoBehaviour {
         }
         return sum / points.Length;
 
+    }
+
+    //takes a color value and returns the 
+    float GetAltitudeForColor(Color c)
+    {
+        return 0;
     }
 }
 

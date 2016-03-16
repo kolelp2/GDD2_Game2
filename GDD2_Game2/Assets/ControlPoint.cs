@@ -3,10 +3,18 @@ using System.Collections;
 
 public class ControlPoint : MonoBehaviour {
     CPManager cpm;
+    SpriteRenderer sr;
     bool dragging = false; //is this point being mouse-dragged?
-
+    Color color;
     [SerializeField]
     static float drawDepth = -1.0f;
+
+    float strength = 1;
+    public float Strength
+    {
+        get { return strength; }
+        set { strength = value; }
+    }
 
     public static float DrawDepth
     {
@@ -15,8 +23,10 @@ public class ControlPoint : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        cpm = (CPManager)GameObject.Find("Map").GetComponent(typeof(CPManager));
-        cpm.AddCP(this);
+        GameObject map = GameObject.Find("Map");
+        cpm = (CPManager)map.GetComponent(typeof(CPManager));
+        sr = (SpriteRenderer)GetComponent(typeof(SpriteRenderer));
+        //cpm.AddCP(this);
 	}
 	
 	// Update is called once per frame
@@ -33,6 +43,11 @@ public class ControlPoint : MonoBehaviour {
             //request a VF recalculation since we moved a control point
             cpm.QueueVFRecalculation();
         }
+    }
+
+    public void SetColor(Color color)
+    {
+        sr.color = color;
     }
 
     void OnDestroy()

@@ -11,6 +11,7 @@ public class CPManager : MonoBehaviour {
 
     //field of movement vectors
     Vector2[,] vectorField;
+    float[,] cpDistancesSqr;
     Vector2 vfSize;
     //Vector2 mapPos;
 
@@ -41,10 +42,14 @@ public class CPManager : MonoBehaviour {
 
         //change to use precision global, scaled to the map's aspect ratio
         vectorField = new Vector2[(int)vfSize.x, (int)vfSize.y];
+        cpDistancesSqr = new float[(int)vfSize.x, (int)vfSize.y];
         //fill with 0,0s to start
         for (int n = 0; n < vectorField.GetLength(0); n++)
             for (int c = 0; c < vectorField.GetLength(1); c++)
                 vectorField[n, c] = new Vector2(0, 0);
+        for (int n = 0; n < cpDistancesSqr.GetLength(0); n++)
+            for (int c = 0; c < cpDistancesSqr.GetLength(1); c++)
+                cpDistancesSqr[n, c] = float.MaxValue;
     }
 	
 	// Update is called once per frame
@@ -101,6 +106,7 @@ public class CPManager : MonoBehaviour {
 
                 //tracks the magnitude of the longest cp vector
                 float longestMagnitudeSqr = 0.0f;
+                float shortestMagnitudeSqr = float.MaxValue;
                 Vector2 firstCPVector = new Vector2(0,0);
                 //iterate through length of cp list
                 int c = 0;
@@ -118,7 +124,7 @@ public class CPManager : MonoBehaviour {
                         //if the cp is farther than the deadzone radius, we're good
                         if (!(cpPositionRelativeToGridPoint.sqrMagnitude < (cpDeadZone / vfPrecision) * (cpDeadZone / vfPrecision)))
                         {
-                            cpVectors.Add(cpPositionRelativeToGridPoint);
+                            cpVectors.Add(cpPositionRelativeToGridPoint*cp.Strength);
                             numInRange++;
                         }
                         //otherwise, mark that this point is dead and break
@@ -133,6 +139,7 @@ public class CPManager : MonoBehaviour {
 
                     //check for new longest magnitude
                     if (cpPositionRelativeToGridPoint.sqrMagnitude > longestMagnitudeSqr) longestMagnitudeSqr = cpPositionRelativeToGridPoint.sqrMagnitude;
+                    if (cpPositionRelativeToGridPoint.sqrMagnitude < shortestMagnitudeSqr) shortestMagnitudeSqr = cpPositionRelativeToGridPoint.sqrMagnitude;
                 }
 
                 //we'll multiply all vectors by a scale factor so that the closest ones matter more
@@ -155,9 +162,12 @@ public class CPManager : MonoBehaviour {
                                 calculatedVector += v * (longestMagnitudeSqr - v.sqrMagnitude) / v.sqrMagnitude;
                         }
                 }
+                else
+                    shortestMagnitudeSqr = float.MaxValue;
 
                 //final vector is the sum normalized
                 vectorField[row, col] = calculatedVector;
+                cpDistancesSqr[row, col] = shortestMagnitudeSqr;
 
                 //if we've done the last in this batch, stop until the next frame
                 if ((row * col) % calculationsPerFrame == calculationsPerFrame - 1) yield return null;
@@ -202,17 +212,70 @@ public class CPManager : MonoBehaviour {
         return returnVector.normalized;
     }
 
+    //gets estimated distance from control point by averaging nearest four values in cpDistances array
+    //same as the above method, but returns a float, and pulls from a diferent array
+    public float GetDistanceSqrFromCPAtPos(Vector2 pos)
+    {
+        //correct for map offset
+        pos = mi.WorldToGridSpace(pos, vfPrecision);
+        //if we're off the map, return normalized vector toward map center
+        if (!mi.IsGridPosOnMap(pos, vfPrecision))
+            return float.MaxValue;
+
+        float returnValue = 0;
+
+        //get the nearest ints for both dimensions in both directions
+        int xUp = (int)Math.Ceiling(pos.x);
+        int xDown = (int)Math.Floor(pos.x);
+        int yUp = (int)Math.Ceiling(pos.y);
+        int yDown = (int)Math.Floor(pos.y);
+
+        //loop in 2d from the bottom ints to the top
+        for (int n = xDown; n <= xUp; n++)
+        {
+            for (int c = yDown; c <= yUp; c++)
+            {
+                //get the field vector for the current ints
+                float nearVec = cpDistancesSqr[n, c];
+                //scale factor, closer is stronger
+                float scaleFactor = (1 - Math.Abs(n - pos.x)) * (1 - Math.Abs(c - pos.y));
+                //add scaled field vector to return vector
+                returnValue += nearVec * scaleFactor;
+                //Debug.DrawRay(new Vector2(n, c), nearVec * scaleFactor, Color.blue, Time.deltaTime);
+            }
+        }
+        return returnValue / 4;
+    }
+
     public void QueueVFRecalculation()
     {
         recalculateVF = true;
     }
 
-    void OnMouseDown()
+    void OnMouseOver()
     {
-        Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
-        if (mi.IsWorldPosOnMap(newPos))
-            Instantiate(Resources.Load("control point"), newPos, Quaternion.identity);
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
+            if (mi.IsWorldPosOnMap(newPos))
+            {
+                ControlPoint newCP = (ControlPoint)(Instantiate(Resources.Load("control point"), newPos, Quaternion.identity) as GameObject).GetComponent(typeof(ControlPoint));
+                AddCP(newCP);
+            }
+        }
+        else if (Input.GetMouseButtonDown(1))
+        {
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3 newPos = new Vector3(mousePos.x, mousePos.y, ControlPoint.DrawDepth);
+            if (mi.IsWorldPosOnMap(newPos))
+            {
+                ControlPoint newCP = (ControlPoint)(Instantiate(Resources.Load("control point"), newPos, Quaternion.identity) as GameObject).GetComponent(typeof(ControlPoint));
+                newCP.Strength = -1;
+                //newCP.SetColor(Color.cyan);
+                AddCP(newCP);
+            }
+        }
     }
 
     

@@ -5,6 +5,10 @@ public class Mover : MonoBehaviour {
     float maxMoveSpeed = 0.0f;
     static int velocityUpdateInterval = 1;
     int velocityUpdateSeed;
+    static int positionUpdateInterval = 1;
+    int positionUpdateSeed;
+    static float minSpeed = 1.0f;
+    static float speedVariance = 2.0f;
     public float MaxMoveSpeed
     {
         get { return maxMoveSpeed; }
@@ -21,7 +25,7 @@ public class Mover : MonoBehaviour {
     float turnSpeed = 2.0f;
     void Awake()
     {
-        maxMoveSpeed = UnityEngine.Random.value * 2.0f + 1.0f;
+        maxMoveSpeed = UnityEngine.Random.value * speedVariance + minSpeed;
     }
 
 	// Use this for initialization
@@ -36,6 +40,11 @@ public class Mover : MonoBehaviour {
         //work up to the target velocity over time
         if (Time.frameCount % velocityUpdateInterval == velocityUpdateSeed)
             velocity = (velocity + targetVelocity * turnSpeed * Time.deltaTime * velocityUpdateInterval).normalized * targetVelocity.magnitude;
+        if (velocity != Vector2.zero)
+        {
+            var angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.AngleAxis(angle-90, Vector3.forward);
+        }
 	}
 
     public void SetVelocity(Vector2 direction, float speed)
