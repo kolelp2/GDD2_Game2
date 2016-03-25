@@ -13,6 +13,8 @@ public class MapInfo : MonoBehaviour {
     [SerializeField]
     int numberOfTiles = 11;
     [SerializeField]
+    int blankTiles = 5;
+    [SerializeField]
     int altitudeFieldPrecision = 2;
     float[,] altitudeField;
     public static float WorldTimeInDays
@@ -47,16 +49,22 @@ public class MapInfo : MonoBehaviour {
         int tileX = (int)Math.Ceiling(mapSize.x / tileDimension);
         int tileY = (int)Math.Ceiling(mapSize.y / tileDimension);
         Sprite[,] mapSprites = new Sprite[tileX, tileY];
+        int[,] spriteRotations = new int[tileX, tileY];
         //iterate through the 2d tile grid
         for(int row = 0; row < tileX; row++)
         {
             for(int col = 0; col < tileY; col++)
             {
                 //get a random rotation in 90deg intervals
-                Quaternion rotation = Quaternion.Euler(0, 0, UnityEngine.Random.Range(0, 4) * 90);
+                int rotationDegrees = UnityEngine.Random.Range(0, 4) * 90;
+                Quaternion rotation = Quaternion.Euler(0, 0, rotationDegrees);
+                spriteRotations[row, col] = rotationDegrees;
                 //instantate the tile at the current position in the grid
                 //this means transforming from grid space to world space, accounting for the fact that the grid is bottom-left anchored and the tile objects are center-anchored, and correcting for the map's offset
-                GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile" + UnityEngine.Random.Range(1, numberOfTiles)), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), rotation);
+                int tileType = UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
+                if (tileType > numberOfTiles) //the blank tile may be considered more than once
+                    tileType = numberOfTiles;
+                GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile" + tileType), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), rotation);
                 SpriteRenderer sr = (SpriteRenderer)newTile.GetComponent(typeof(SpriteRenderer));
                 //save the sprites - we'll use them to generate the altitude field
                 mapSprites[row, col] = sr.sprite;
