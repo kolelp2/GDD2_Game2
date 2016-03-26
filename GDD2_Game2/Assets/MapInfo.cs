@@ -93,7 +93,8 @@ public class MapInfo : MonoBehaviour {
                 Vector2 translation = new Vector2(.5f, .5f);
                 //translate percentage vector to center of tile, rotate it by the tiles rotation, then translate it back
                 //this is to account for the random rotation of the tiles when we do the pixel lookup
-                asTilePercentage = (Vector2)(spriteRotations[(int)asGridIndex.x, (int)asGridIndex.y] * (asTilePercentage - translation)) + translation;
+                //need to use the inverse of the quat, because reasons
+                asTilePercentage = (Vector2)(Quaternion.Inverse(spriteRotations[(int)asGridIndex.x, (int)asGridIndex.y]) * (asTilePercentage - translation)) + translation;
 
                 //get the tile
                 Sprite currentTile = mapSprites[(int)asGridIndex.x, (int)asGridIndex.y];
@@ -101,6 +102,7 @@ public class MapInfo : MonoBehaviour {
                 Color fieldPointColor = currentTile.texture.GetPixel((int)(asTilePercentage.x * currentTile.rect.width), (int)(asTilePercentage.y * currentTile.rect.height));
 
                 altitudeField[row, col] = GetAltitudeForColor(fieldPointColor);
+                Debug.DrawRay(fieldPointInWorldSpace, new Vector2(0, altitudeField[row, col]/2), Color.red, float.MaxValue);
             }
         }
 
@@ -198,7 +200,7 @@ public class MapInfo : MonoBehaviour {
     float GetAltitudeForColor(Color c)
     {
         //water, shallow to deep
-        if (c == new Color(138f / 256f, 188 / 256f, 226 / 256f))
+        if (AreColorsWithinTolerance(c, new Color(138f / 256f, 188 / 256f, 226 / 256f), .05f))
             return -1;
         else if (AreColorsWithinTolerance(c, new Color(96 / 256f, 156 / 256f, 230 / 256f), .05f))
             return -2;
@@ -224,6 +226,51 @@ public class MapInfo : MonoBehaviour {
     static bool AreColorsWithinTolerance(Color c1, Color c2, float tolerance)
     {
         return Math.Abs(c1.r - c2.r) < tolerance && Math.Abs(c1.g - c2.g) < tolerance && Math.Abs(c1.b - c2.b) < tolerance && Math.Abs(c1.a - c2.a) < tolerance;
+    }
+
+    //same as the cpm vector method
+    //averages the nearest four altitudes to the given position
+    public float GetAltitudeAtPos(Vector2 pos)
+    {
+        //correct for map offset
+        pos = WorldToGridSpace(pos, altitudeFieldPrecision);
+        //if we're off the map, return normalized vector toward map center
+        if (!IsGridPosOnMap(pos, altitudeFieldPrecision))
+            return 0;
+
+        float returnValue = 0;
+
+        //get the nearest ints for both dimensions in both directions
+        int xUp = (int)Math.Ceiling(pos.x);
+        int xDown = (int)Math.Floor(pos.x);
+        int yUp = (int)Math.Ceiling(pos.y);
+        int yDown = (int)Math.Floor(pos.y);
+
+        //loop in 2d from the bottom ints to the top
+        for (int n = xDown; n <= xUp; n++)
+        {
+            for (int c = yDown; c <= yUp; c++)
+            {
+                //get the value for the current ints
+                float nearVec = altitudeField[n, c];
+                //scale factor, closer is stronger
+                float scaleFactor = (1 - Math.Abs(n - pos.x)) * (1 - Math.Abs(c - pos.y));
+                //add scaled field vector to return vector
+                returnValue += nearVec * scaleFactor;
+                //Debug.DrawRay(new Vector2(n, c), nearVec * scaleFactor, Color.blue, Time.deltaTime);
+            }
+        }
+//        Debug.DrawRay(new Vector3(pos.x,pos.y,-5), new Vector2(0, returnValue),Color.red,Time.deltaTime*4);
+        return returnValue / 4;
+    }
+
+    //refine this
+    //each unit of altitude removes a sixth of the multiplier
+    public float GetSpeedModifierFromAltitudeAtPos(Vector2 pos)
+    {
+        float alt = GetAltitudeAtPos(pos);
+        float altmod = 1 - (Math.Abs(alt) / 6);
+        return altmod;
     }
 }
 
