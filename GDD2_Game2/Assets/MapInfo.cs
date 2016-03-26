@@ -49,7 +49,7 @@ public class MapInfo : MonoBehaviour {
         int tileX = (int)Math.Ceiling(mapSize.x / tileDimension);
         int tileY = (int)Math.Ceiling(mapSize.y / tileDimension);
         Sprite[,] mapSprites = new Sprite[tileX, tileY];
-        int[,] spriteRotations = new int[tileX, tileY];
+        Quaternion[,] spriteRotations = new Quaternion[tileX, tileY];
         //iterate through the 2d tile grid
         for(int row = 0; row < tileX; row++)
         {
@@ -58,7 +58,7 @@ public class MapInfo : MonoBehaviour {
                 //get a random rotation in 90deg intervals
                 int rotationDegrees = UnityEngine.Random.Range(0, 4) * 90;
                 Quaternion rotation = Quaternion.Euler(0, 0, rotationDegrees);
-                spriteRotations[row, col] = rotationDegrees;
+                spriteRotations[row, col] = rotation;
                 //instantate the tile at the current position in the grid
                 //this means transforming from grid space to world space, accounting for the fact that the grid is bottom-left anchored and the tile objects are center-anchored, and correcting for the map's offset
                 int tileType = UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
@@ -90,6 +90,10 @@ public class MapInfo : MonoBehaviour {
                 Vector2 asGridIndex = new Vector2((float)Math.Truncate(inTileGridSpace.x), (float)Math.Truncate(inTileGridSpace.y));
                 //get the "remainder" of the truncation - e.g. (14.2, 1.5) becomes (.2, .5) - this will be used to locate the proper pixel within the tile
                 Vector2 asTilePercentage = new Vector2(inTileGridSpace.x - asGridIndex.x, inTileGridSpace.y - asGridIndex.y);
+                Vector2 translation = new Vector2(.5f, .5f);
+                //translate percentage vector to center of tile, rotate it by the tiles rotation, then translate it back
+                //this is to account for the random rotation of the tiles when we do the pixel lookup
+                asTilePercentage = (Vector2)(spriteRotations[(int)asGridIndex.x, (int)asGridIndex.y] * (asTilePercentage - translation)) + translation;
 
                 //get the tile
                 Sprite currentTile = mapSprites[(int)asGridIndex.x, (int)asGridIndex.y];
@@ -193,7 +197,33 @@ public class MapInfo : MonoBehaviour {
     //takes a color value and returns the 
     float GetAltitudeForColor(Color c)
     {
-        return 0;
+        //water, shallow to deep
+        if (c == new Color(138f / 256f, 188 / 256f, 226 / 256f))
+            return -1;
+        else if (AreColorsWithinTolerance(c, new Color(96 / 256f, 156 / 256f, 230 / 256f), .05f))
+            return -2;
+        else if (AreColorsWithinTolerance(c, new Color(69 / 256f, 124 / 256f, 225 / 256f), .05f))
+            return -3;
+        else if (AreColorsWithinTolerance(c, new Color(50 / 256f, 108 / 256f, 226 / 256f), .05f))
+            return -4;
+        else if (AreColorsWithinTolerance(c, new Color(42 / 256f, 99 / 256f, 225 / 256f), .05f))
+            return -5;
+        //land, low to high
+        else if (AreColorsWithinTolerance(c, new Color(194 / 256f, 255 / 256f, 167 / 256f), .05f))
+            return 1;
+        else if (AreColorsWithinTolerance(c, new Color(162 / 256f, 255 / 256f, 122 / 256f), .05f))
+            return 2;
+        else if (AreColorsWithinTolerance(c, new Color(155 / 256f, 237 / 256f, 105 / 256f), .05f))
+            return 3;
+        else if (AreColorsWithinTolerance(c, new Color(145 / 256f, 210 / 256f, 80 / 256f), .05f))
+            return 4;
+        else if (AreColorsWithinTolerance(c, new Color(145 / 256f, 167 / 256f, 53 / 256f), .05f))
+            return 5;
+        else return 0;
+    }
+    static bool AreColorsWithinTolerance(Color c1, Color c2, float tolerance)
+    {
+        return Math.Abs(c1.r - c2.r) < tolerance && Math.Abs(c1.g - c2.g) < tolerance && Math.Abs(c1.b - c2.b) < tolerance && Math.Abs(c1.a - c2.a) < tolerance;
     }
 }
 
