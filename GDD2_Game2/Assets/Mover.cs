@@ -27,7 +27,7 @@ public class Mover : MonoBehaviour {
         }
     }
     Vector2 targetVelocity = new Vector2(0, 0);
-    float turnSpeed = 2.0f;
+    float turnSpeed = 4.0f; //higher means sharper turns
     void Awake()
     {
         maxMoveSpeed = UnityEngine.Random.value * speedVariance + minSpeed;

@@ -27,14 +27,14 @@ public class Human : MonoBehaviour {
     static int resourceNodeCheckInterval = 480;
     int[] resourceNodeCheckSeed = new int[GOTracker.resourceNodeTypeCount];
     [SerializeField]
-    static float resourceNodeCheckDistance = 20.0f;
+    static float resourceNodeCheckDistance = 50.0f;
     [SerializeField]
     static int campCheckInterval = 480;
     int campCheckSeed;
     [SerializeField]
-    static float campCheckDistance = 20.0f;
+    static float campCheckDistance = 100.0f;
     [SerializeField]
-    static int decisionMakingInterval = 80;
+    static int decisionMakingInterval = 83;
     int decisionMakingSeed;
     [SerializeField]
     static float resourceThreshhold = 2.5f;
@@ -42,7 +42,7 @@ public class Human : MonoBehaviour {
     static float baseCarryingCapacity = 3;
     float carryingCapacity;
     [SerializeField]
-    static int actionInterval = 30;
+    static int actionInterval = 37;
     int actionSeed;
     static int locationPruneInterval = 60;
     int locationPruneSeed;
@@ -50,6 +50,8 @@ public class Human : MonoBehaviour {
     static int campDelay = 200;
     [SerializeField]
     static float baseResourceDecayPerDay = 10;
+    static int drainInterval = 600;
+    int drainSeed;
     static float defaultTargetTolerance = 1;
     static float maximumCampDensity = 50;
     static int reportInterval = 60;
@@ -113,6 +115,8 @@ public class Human : MonoBehaviour {
 
     //wander direction
     Vector2? wanderDirection = null;
+
+    float[] drainAmountsByType;
     #endregion
 
     #region properties
@@ -222,6 +226,8 @@ public class Human : MonoBehaviour {
         for (int c = 0; c < resourceLocationsByType.Length; c++)
             resourceLocationsByType[c] = new HashSet<Vector2>();
 
+        drainAmountsByType = new float[resourceLocationsByType.Length];
+
         //generate polling seeds
         humanCheckSeed = (int)Math.Round(UnityEngine.Random.value * (humanCheckInterval-1));
         greetSeed = (int)Math.Round(UnityEngine.Random.value * (greetInterval-1));
@@ -235,6 +241,7 @@ public class Human : MonoBehaviour {
         reportSeed = (int)Math.Round(UnityEngine.Random.value * (reportInterval-1));
         moveSeed = (int)Math.Round(UnityEngine.Random.value * (moveInterval-1));
         locationPruneSeed = (int)Math.Round(UnityEngine.Random.value * (locationPruneInterval - 1));
+        drainSeed = (int)Math.Round(UnityEngine.Random.value * (drainInterval - 1));
     }
 	
 	// Update is called once per frame
@@ -248,8 +255,17 @@ public class Human : MonoBehaviour {
             {
                 myGOT.ReportDeath(this, ObjectType.Human);
                 Destroy(gameObject);
+                Destroy(this);
             }
-            inventory[c] -= resourceDecay * Time.deltaTime;
+            drainAmountsByType[c-startResource] += resourceDecay * Time.deltaTime;
+        }
+        if(Time.frameCount % drainInterval == drainSeed)
+        {
+            for (int c = 0; c < GOTracker.resourceNodeTypeCount; c++)
+            {
+                inventory[c + startResource] -= drainAmountsByType[c];
+                drainAmountsByType[c] = 0;
+            }
         }
         #endregion
 
@@ -303,6 +319,8 @@ public class Human : MonoBehaviour {
                 {
                     resourceLocationsByType[c].Add(mb.gameObject.transform.position);
                     harvestRangesByResourceType[c] = mb.GetHarvestRange(transform.position);
+                    if (nearestNodesByType[c] == null || ((Vector2)mb.transform.position-(Vector2)transform.position).sqrMagnitude < (nearestNodesByType[c] - (Vector2)transform.position).Value.sqrMagnitude)
+                        nearestNodesByType[c] = mb.transform.position;
                 }
                 //check nearest node against nearby nodes to prune dead nodes
                 //if we have a node of this type, and it's within half our check distance
@@ -357,11 +375,11 @@ public class Human : MonoBehaviour {
                 for (int c = 0; c < resourceLocationsByType.Length; c++)
                 {
                     resourceLocationsByType[c].Remove(deadLocation);
-                    if (nearestNodesByType[c] == deadLocation)
+                    if (nearestNodesByType[c].Value == deadLocation)
                         nearestNodesByType[c] = null;
                 }
                 campLocations.Remove(deadLocation);
-                if (nearestCamp == deadLocation)
+                if (nearestCamp.Value == deadLocation)
                     nearestCamp = null;
                 deadLocationsArchive.Add(deadLocation); //make sure to add each dead location to the archive
             }
@@ -371,9 +389,7 @@ public class Human : MonoBehaviour {
             bool[] canCarryMore = CanCarryMoreResources;
 
             //get the closest camp
-            Vector2? closestCamp = nearestCamp;
-            if (nearestCamp == null)
-                nearestCamp = ClosestCampLong;
+            Vector2? closestCamp = (nearestCamp.HasValue) ? nearestCamp : ClosestCampLong;
 
             //get the closest of each resource node
             Vector2?[] closestNodes = nearestNodesByType; //null means we don't have any nodes of that type
@@ -453,6 +469,7 @@ public class Human : MonoBehaviour {
                 {
                     //walk to that one
                     targetPos = (closestCampIsWalkable) ? closestCamp : closestNode;
+                    Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.red, .1f);
                 }
                 //if neither are walkable
                 else if (!(closestCampIsWalkable || closestNodeIsWalkable))
@@ -473,12 +490,14 @@ public class Human : MonoBehaviour {
                     {
                         targetPos = closestNode;
                         targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value];
+                        Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.magenta, .1f);
                     }
                     //otherwise go to the camp
                     else
                     {
                         targetPos = closestCamp;
                         targetPosTolerance = Camp.minInteractRadius;
+                        Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.green, .1f);
                     }
                 }
             }
@@ -514,6 +533,7 @@ public class Human : MonoBehaviour {
                 {
                     targetPos = closestNode;
                     targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value];
+                    Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.green, .1f);
                 }
             }
             //if I don't need any and can't carry more...
@@ -522,6 +542,7 @@ public class Human : MonoBehaviour {
                 //go to nearest camp
                 targetPos = closestCamp;
                 targetPosTolerance = Camp.minInteractRadius;
+                Debug.DrawRay(transform.position, targetPos.Value-(Vector2)transform.position, Color.blue, .1f);
             }
 
         }
@@ -555,7 +576,12 @@ public class Human : MonoBehaviour {
     {
         nearbyCamps = myGOT.GetObjsInRange(transform.position, campCheckDistance, ObjectType.Camp);
         foreach (MonoBehaviour mb in nearbyCamps)
+        {
             campLocations.Add(mb.gameObject.transform.position);
+            float distanceToCampSqr = ((Vector2)mb.gameObject.transform.position - (Vector2)transform.position).sqrMagnitude;
+            if (nearestCamp == null || distanceToCampSqr < (nearestCamp - (Vector2)transform.position).Value.sqrMagnitude)
+                nearestCamp = mb.transform.position;
+        }
     }
 
     IEnumerator PlaceCamp(int waitFrames)

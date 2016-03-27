@@ -110,6 +110,7 @@ public class Zombie : MonoBehaviour {
             success = true;
             myGOT.ReportDeath(this, ObjectType.Zombie);
             Destroy(gameObject);
+            Destroy(this);
         }
     }
 }

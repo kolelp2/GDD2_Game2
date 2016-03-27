@@ -169,7 +169,7 @@ public class GOTracker : MonoBehaviour {
             typeList[deadThingGridPos].Remove(deadThing);
         }
         unitWorldPositions.Remove(deadThing);
-        if (unitCountsByType[deadThingType] > 0)
+        //if (unitCountsByType[deadThingType] > 0)
             unitCountsByType[deadThingType]--;
     }
 
