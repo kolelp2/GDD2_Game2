@@ -272,7 +272,7 @@ public class CPManager : MonoBehaviour {
             {
                 ControlPoint newCP = (ControlPoint)(Instantiate(Resources.Load("control point"), newPos, Quaternion.identity) as GameObject).GetComponent(typeof(ControlPoint));
                 newCP.Strength = -1;
-                //newCP.SetColor(Color.cyan);
+                StartCoroutine(newCP.SetColor(Color.blue));
                 AddCP(newCP);
             }
         }

@@ -30,35 +30,42 @@ public class GOTracker : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //generate nodes
-        for(int c = 0; c < startingNodesOfEachType; c++)
-        {
-            //food
-            Instantiate(Resources.Load("Food"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
-            //fuel
-            Instantiate(Resources.Load("Fuel"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
-            //water
-            Instantiate(Resources.Load("Water"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
-        }
-        //generate humans
-        for(int c = 0; c < startingHumans; c++)
-        {
-            Instantiate(Resources.Load("Human"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
-        }
-
-        //generate zombies
-        Vector2 zombieStart = mi.GetRandomMapPosAsWorldPos();
-        Camera.main.transform.position = new Vector3(zombieStart.x, zombieStart.y, Camera.main.transform.position.z);
-        for (int c = 0; c < startingZombies; c++)
-        {
-            Instantiate(Resources.Load("Zombie"), zombieStart + UnityEngine.Random.insideUnitCircle * 20, Quaternion.identity);
-        }
+        
 	}
 	
 	// Update is called once per frame
 	void Update () {
 	    
 	}
+
+    public void GenerateObjs(List<Vector2> waterLocations)
+    {
+        //generate nodes (not water)
+        for (int c = 0; c < startingNodesOfEachType; c++)
+        {
+            //food
+            Instantiate(Resources.Load("Food"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
+            //fuel
+            Instantiate(Resources.Load("Fuel"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
+        }
+        //generate water nodes
+        foreach(Vector2 loc in waterLocations)
+            Instantiate(Resources.Load("Water"), loc, Quaternion.identity);
+
+        //generate humans
+        for (int c = 0; c < startingHumans; c++)
+        {
+            Instantiate(Resources.Load("Human"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
+        }
+
+        //generate zombies
+        Vector2 zombieStart = mi.GetRandomSeaLevelMapPosAsWorldPos();
+        Camera.main.transform.position = new Vector3(zombieStart.x, zombieStart.y, Camera.main.transform.position.z);
+        for (int c = 0; c < startingZombies; c++)
+        {
+            Instantiate(Resources.Load("Zombie"), zombieStart + UnityEngine.Random.insideUnitCircle * 20, Quaternion.identity);
+        }
+    }
 
     public List<MonoBehaviour> GetObjsInRange(Vector2 pos, float radius, ObjectType objType)
     {

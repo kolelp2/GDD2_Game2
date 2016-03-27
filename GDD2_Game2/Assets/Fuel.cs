@@ -9,11 +9,6 @@ public class Fuel : ResourceNode {
     [SerializeField]
     public readonly static float harvestRange = .3f;
     static float drawDepth = -.5f;
-    public override float HarvestRange    
-
-    {
-        get { return harvestRange; }
-    }
     public override ResourceType ResourceType
     {
         get { return ResourceType.FuelRaw; }
@@ -62,5 +57,14 @@ public class Fuel : ResourceNode {
             stock = 0;
             return returnAmt;
         }
+    }
+
+    public override float GetHarvestRange()
+    {
+        return harvestRange;
+    }
+    public override float GetHarvestRange(Vector2 pos)
+    {
+        return harvestRange;
     }
 }

@@ -302,7 +302,7 @@ public class Human : MonoBehaviour {
                 foreach (ResourceNode mb in nearbyResourceNodes)
                 {
                     resourceLocationsByType[c].Add(mb.gameObject.transform.position);
-                    harvestRangesByResourceType[c] = mb.HarvestRange;
+                    harvestRangesByResourceType[c] = mb.GetHarvestRange(transform.position);
                 }
                 //check nearest node against nearby nodes to prune dead nodes
                 //if we have a node of this type, and it's within half our check distance
@@ -389,7 +389,7 @@ public class Human : MonoBehaviour {
             if (!allNodeTypesKnown)
             {
                 //wander until we do
-                if (wanderDirection == null)
+                if (wanderDirection == null || wanderDirection == Vector2.zero)
                     wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
                 targetPos = (Vector2)transform.position + wanderDirection * 50;
             }
@@ -623,7 +623,8 @@ public class Human : MonoBehaviour {
                 nearestNodesByType[(int)nodeType] = rn.transform.position; //make it the new closest if it is
 
             //range check
-            if (distanceToNodeSqr < rn.HarvestRange * rn.HarvestRange)
+            float rnHarvestRange = rn.GetHarvestRange(transform.position); //this will be somewhat expensive for water, so we don't want to call it twice
+            if (distanceToNodeSqr < rnHarvestRange * rnHarvestRange)
             {
                 float requestAmt = carryingCapacity - inventory[(int)rn.ResourceType]; //request enough to get you to your carrying capacity
                 float gatherAmt = rn.Harvest(requestAmt); //save the actual amount harvested

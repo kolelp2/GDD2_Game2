@@ -45,8 +45,10 @@ public class ControlPoint : MonoBehaviour {
         }
     }
 
-    public void SetColor(Color color)
+    public IEnumerator SetColor(Color color)
     {
+        while(sr == null)
+            yield return null;
         sr.color = color;
     }
 
