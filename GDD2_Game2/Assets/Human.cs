@@ -389,7 +389,7 @@ public class Human : MonoBehaviour {
             if (!allNodeTypesKnown)
             {
                 //wander until we do
-                if (wanderDirection == null)
+                if (wanderDirection == null || wanderDirection == Vector2.zero)
                     wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
                 targetPos = (Vector2)transform.position + wanderDirection * 50;
             }

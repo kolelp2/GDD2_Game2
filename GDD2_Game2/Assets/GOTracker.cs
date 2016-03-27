@@ -44,9 +44,9 @@ public class GOTracker : MonoBehaviour {
         for (int c = 0; c < startingNodesOfEachType; c++)
         {
             //food
-            Instantiate(Resources.Load("Food"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
+            Instantiate(Resources.Load("Food"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
             //fuel
-            Instantiate(Resources.Load("Fuel"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
+            Instantiate(Resources.Load("Fuel"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
         }
         //generate water nodes
         foreach(Vector2 loc in waterLocations)
@@ -55,11 +55,11 @@ public class GOTracker : MonoBehaviour {
         //generate humans
         for (int c = 0; c < startingHumans; c++)
         {
-            Instantiate(Resources.Load("Human"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
+            Instantiate(Resources.Load("Human"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
         }
 
         //generate zombies
-        Vector2 zombieStart = mi.GetRandomMapPosAsWorldPos();
+        Vector2 zombieStart = mi.GetRandomSeaLevelMapPosAsWorldPos();
         Camera.main.transform.position = new Vector3(zombieStart.x, zombieStart.y, Camera.main.transform.position.z);
         for (int c = 0; c < startingZombies; c++)
         {

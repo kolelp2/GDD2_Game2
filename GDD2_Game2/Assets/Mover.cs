@@ -13,6 +13,7 @@ public class Mover : MonoBehaviour {
     int altitudeModUpdateSeed;
     float altitudeModifier = 1.0f;
     MapInfo mi;
+    SpriteRenderer sr;
     public float MaxMoveSpeed
     {
         get { return maxMoveSpeed; }
@@ -35,6 +36,7 @@ public class Mover : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         mi = (MapInfo)GameObject.Find("Map").GetComponent(typeof(MapInfo));
+        sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
         velocityUpdateSeed = (int)Math.Round(UnityEngine.Random.value * (velocityUpdateInterval - 1));
         altitudeModUpdateSeed = (int)Math.Round(UnityEngine.Random.value * (altitudeModUpdateInterval - 1));
     }

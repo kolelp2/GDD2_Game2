@@ -235,6 +235,17 @@ public class MapInfo : MonoBehaviour {
         return new Vector2(x, y);
     }
 
+    public Vector2 GetRandomSeaLevelMapPosAsWorldPos()
+    {
+        Vector2 pos;
+        do
+        {
+            pos = GetRandomMapPosAsWorldPos();
+        }
+        while (GetAltitudeAtPos(pos) != 0);
+        return pos;
+    }
+
     //returns the centroid of an array of points
     public static Vector2 GetCentroid(Vector2[] points)
     {
