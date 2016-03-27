@@ -11,10 +11,6 @@ public class Food : ResourceNode
     public readonly static float harvestRange = .3f;
     static float drawDepth = -.5f;
 
-    public override float HarvestRange
-    {
-        get { return harvestRange; }
-    }
     public override ResourceType ResourceType
     {
         get { return ResourceType.FoodRaw; }
@@ -63,12 +59,21 @@ public class Food : ResourceNode
             return returnAmt;
         }
     }
+    public override float GetHarvestRange()
+    {
+        return harvestRange;
+    }
+    public override float GetHarvestRange(Vector2 pos)
+    {
+        return harvestRange;
+    }
 }
 
 public abstract class ResourceNode : MonoBehaviour
 {
     //range at which this resource may be harvested
-    public abstract float HarvestRange { get; }
+    public abstract float GetHarvestRange();
+    public abstract float GetHarvestRange(Vector2 pos);
 
     //the type - see ResourceType enum
     public abstract ResourceType ResourceType { get; }

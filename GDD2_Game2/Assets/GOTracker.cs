@@ -30,18 +30,30 @@ public class GOTracker : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //generate nodes
-        for(int c = 0; c < startingNodesOfEachType; c++)
+        
+	}
+	
+	// Update is called once per frame
+	void Update () {
+	    
+	}
+
+    public void GenerateObjs(List<Vector2> waterLocations)
+    {
+        //generate nodes (not water)
+        for (int c = 0; c < startingNodesOfEachType; c++)
         {
             //food
             Instantiate(Resources.Load("Food"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
             //fuel
             Instantiate(Resources.Load("Fuel"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
-            //water
-            Instantiate(Resources.Load("Water"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
         }
+        //generate water nodes
+        foreach(Vector2 loc in waterLocations)
+            Instantiate(Resources.Load("Water"), loc, Quaternion.identity);
+
         //generate humans
-        for(int c = 0; c < startingHumans; c++)
+        for (int c = 0; c < startingHumans; c++)
         {
             Instantiate(Resources.Load("Human"), mi.GetRandomMapPosAsWorldPos(), Quaternion.identity);
         }
@@ -53,12 +65,7 @@ public class GOTracker : MonoBehaviour {
         {
             Instantiate(Resources.Load("Zombie"), zombieStart + UnityEngine.Random.insideUnitCircle * 20, Quaternion.identity);
         }
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	    
-	}
+    }
 
     public List<MonoBehaviour> GetObjsInRange(Vector2 pos, float radius, ObjectType objType)
     {

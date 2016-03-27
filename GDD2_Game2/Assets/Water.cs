@@ -6,10 +6,6 @@ public class Water : ResourceNode
     GOTracker myGOT;
     public readonly static float harvestRange = .3f;
     static float drawDepth = -.1f;
-    public override float HarvestRange
-    {
-        get { return harvestRange; }
-    }
     public override ResourceType ResourceType
     {
         get { return ResourceType.WaterRaw; }
@@ -42,5 +38,15 @@ public class Water : ResourceNode
     public float? GetStock(GameObject go)
     {
         return float.MaxValue;
+    }
+
+
+    public override float GetHarvestRange()
+    {
+        return harvestRange;
+    }
+    public override float GetHarvestRange(Vector2 pos)
+    {
+        return harvestRange;
     }
 }

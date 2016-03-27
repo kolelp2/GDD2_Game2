@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using System;
 
 public class MapInfo : MonoBehaviour {
@@ -106,6 +107,79 @@ public class MapInfo : MonoBehaviour {
             }
         }
 
+        //assemble water groups
+        Dictionary<int, List<Vector2>> waterGroups = new Dictionary<int, List<Vector2>>(); //list of water groups, where each is a list of points
+        Dictionary<Vector2, int> groupDictionary = new Dictionary<Vector2, int>(); //point-group pairs, so we can look up a point and find its group
+        List<Vector2> waterGroupCentroids = new List<Vector2>();
+        //iterate through alt field
+        for (int row = 0; row < altitudeField.GetLength(0); row++)
+        {
+            for(int col = 0; col < altitudeField.GetLength(1); col++)
+            {
+                //if current point is water
+                if (altitudeField[row, col] < 0)
+                {
+                    //check adjacent points
+                    HashSet<int> otherGroups = new HashSet<int>(); //set of the group numbers of all adjacent points
+                    int lowestGroup = -1; //destination group for the current point
+                    //h gets added to row and v gets added to col to get the coords of the point to check - they loop through a box around the current point
+                    //both will break if the group is not set to the default - this indicates that an adjacent point has already been assigned a group
+                    for (int h = -1; h <= 1; h++)
+                        for (int v = -1; v <= 1; v++)
+                            //make sure the point to be checked is within the bounds of the altitude field
+                            //also make sure it isn't the current point - we don't need to check that
+                            if (h != 0 || v != 0 && h + row >= 0 && h + row < altitudeField.GetLength(0) && v + col >= 0 && v + col < altitudeField.GetLength(1))
+                            {
+                                //try to get the group the point we're checking has been assigned to
+                                int otherGroup;
+                                Vector2 otherPoint = new Vector2(h + row, v + col);
+                                if (groupDictionary.TryGetValue(otherPoint, out otherGroup))
+                                {
+                                    //destination group is the lowest group number of all adjacent points
+                                    if (otherGroup < lowestGroup || lowestGroup == -1)
+                                        lowestGroup = otherGroup;
+                                    //add other point's group to the set
+                                    otherGroups.Add(otherGroup);
+                                }
+                            }
+                    //if the other group set has more than one element, it means the current point is adjacent to more than one group
+                    //we need to merge all the groups into the lowest numbered group
+                    if (otherGroups.Count > 1)
+                    {
+                        //loop through each group number, continuing when we reach the lowest number (that's the group we're merging into)
+                        foreach(int groupNumber in otherGroups)
+                        {
+                            if (groupNumber == lowestGroup || groupNumber > waterGroups.Count - 1 || groupNumber < 0)
+                                continue;
+                            //for each group number, add all the points in its group to the lowest group
+                            //and set its points to the lowest group in the group dictionary
+                            foreach (Vector2 point in waterGroups[groupNumber])
+                            {
+                                waterGroups[lowestGroup].Add(point);
+                                groupDictionary[point] = lowestGroup;
+                            }
+                            //after copying the elements, remove the group
+                            waterGroups.Remove(groupNumber);
+                        }
+                    }
+                    //if we were unable to find an adjacent point with a group, create a new group and mark that group as this point's group
+                    if(lowestGroup==-1)
+                    {
+                        lowestGroup = waterGroups.Count;
+                        waterGroups.Add(lowestGroup, new List<Vector2>());
+                    }
+                    //add point to the appropriate group - note that the vector is an index within the alt field
+                    waterGroups[lowestGroup].Add(new Vector2(row, col));
+                    groupDictionary.Add(new Vector2(row, col), lowestGroup);
+                }
+            }
+        }
+        //find centroids for all water groups
+        foreach (List<Vector2> group in waterGroups.Values)
+            waterGroupCentroids.Add(GridToWorldSpace(GetCentroid(group.ToArray()), altitudeFieldPrecision));
+
+        //pass water locations to GOT so it can generate the game objects
+        ((GOTracker)gameObject.GetComponent(typeof(GOTracker))).GenerateObjs(waterGroupCentroids);
 	}
 	
 	// Update is called once per frame
