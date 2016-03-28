@@ -65,7 +65,21 @@ public class CPManager : MonoBehaviour {
             recalculateVF = false;
             StartCoroutine("RecalculateVectorField");
         }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            ClearCPs();
+        }
         //if(Input.GetMouseButtonDown(0))
+    }
+
+    void ClearCPs()
+    {
+        foreach(ControlPoint cp in CPs)
+        {
+            Destroy(cp);
+        }
+        CPs.Clear();
     }
 
     public void AddCP(ControlPoint cp)

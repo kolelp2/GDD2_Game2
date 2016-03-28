@@ -707,14 +707,22 @@ public class Human : MonoBehaviour {
     {
         //get new camp locations
         foreach (Vector2 cLoc in other.campLocations)
+        {
             campLocations.Add(cLoc);
+            if (nearestCamp.HasValue && (nearestCamp.Value - (Vector2)transform.position).sqrMagnitude > (cLoc - (Vector2)transform.position).sqrMagnitude)
+                nearestCamp = cLoc;
+        }
         yield return null;
 
         //get new node locations for each resource
         for (int c = 0; c < resourceLocationsByType.Length; c++)
         {
             foreach (Vector2 rLoc in other.resourceLocationsByType[c])
+            {
                 resourceLocationsByType[c].Add(rLoc);
+                if (nearestNodesByType[c].HasValue && (nearestNodesByType[c].Value - (Vector2)transform.position).sqrMagnitude > (rLoc - (Vector2)transform.position).sqrMagnitude)
+                    nearestNodesByType[c] = rLoc;
+            }
         }
         yield return null;
 
