@@ -77,6 +77,8 @@ public class Human : MonoBehaviour {
     GOTracker myGOT; //not on the human
     Stats myStats;
 
+    bool isDead = false;
+
     //nearby actors
     List<MonoBehaviour> nearbyZombies = new List<MonoBehaviour>();
     Zombie targetZombie = null; //also current combat target
@@ -249,6 +251,8 @@ public class Human : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        if (isDead) return;
+
         //starvation check and upkeep - unit is killed if it has less than 0 of any processed resource, loses decay per second times delta time per frame
         #region starvation/upkeep
         int startResource = (int)ResourceType.FoodProcessed;
@@ -257,6 +261,7 @@ public class Human : MonoBehaviour {
             if (inventory[c] < 0)
             {
                 myGOT.ReportDeath(this, ObjectType.Human);
+                isDead = true;
                 Destroy(gameObject);
                 Destroy(this);
             }
@@ -449,6 +454,7 @@ public class Human : MonoBehaviour {
                 {
                     //walk to that one
                     targetPos = (closestCampIsWalkable) ? closestCamp : closestNode;
+                    targetPosTolerance = (closestCampIsWalkable) ? Camp.minInteractRadius * .9f : harvestRangesByResourceType[(int)closestNodeType] * .9f;
                     Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.red, .1f);
                 }
                 //if neither are walkable
