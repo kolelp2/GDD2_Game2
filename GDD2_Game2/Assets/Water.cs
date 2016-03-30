@@ -4,7 +4,7 @@ using System.Collections;
 public class Water : ResourceNode
 {
     GOTracker myGOT;
-    public readonly static float harvestRange = .3f;
+    public readonly static float harvestRange = .7f;
     static float drawDepth = -.1f;
     public override ResourceType ResourceType
     {

@@ -82,7 +82,7 @@ public class Human : MonoBehaviour {
     Zombie targetZombie = null; //also current combat target
     List<MonoBehaviour> nearbyHumans = new List<MonoBehaviour>();
     List<MonoBehaviour> nearbyCamps = new List<MonoBehaviour>();
-    List<MonoBehaviour> nearbyResourceNodes = new List<MonoBehaviour>();
+    List<MonoBehaviour>[] nearbyResourceNodesByType = new List<MonoBehaviour>[GOTracker.resourceNodeTypeCount];
     Vector2?[] nearestNodesByType = new Vector2?[GOTracker.resourceNodeTypeCount];
     Vector2? nearestCamp = null;
 
@@ -224,7 +224,10 @@ public class Human : MonoBehaviour {
         for (int c = 0; c < inventory.Length; c++)
             inventory[c] = carryingCapacity;
         for (int c = 0; c < resourceLocationsByType.Length; c++)
+        {
             resourceLocationsByType[c] = new HashSet<Vector2>();
+            nearbyResourceNodesByType[c] = new List<MonoBehaviour>();
+        }
 
         drainAmountsByType = new float[resourceLocationsByType.Length];
 
@@ -312,30 +315,7 @@ public class Human : MonoBehaviour {
         int resourceNodeCheckMod = Time.frameCount % resourceNodeCheckInterval; //save the mod
         for (int c = 0; c < resourceNodeCheckSeed.Length; c++)//if the mod matches one of the seeds
             if (!panic && (resourceNodeCheckMod == resourceNodeCheckSeed[c]))
-            {
-                //add any in-range nodes of that resource to our hash set
-                nearbyResourceNodes = myGOT.GetObjsInRange(transform.position, resourceNodeCheckDistance, c);
-                foreach (ResourceNode mb in nearbyResourceNodes)
-                {
-                    resourceLocationsByType[c].Add(mb.gameObject.transform.position);
-                    harvestRangesByResourceType[c] = mb.GetHarvestRange(transform.position);
-                    if (nearestNodesByType[c] == null || ((Vector2)mb.transform.position-(Vector2)transform.position).sqrMagnitude < (nearestNodesByType[c] - (Vector2)transform.position).Value.sqrMagnitude)
-                        nearestNodesByType[c] = mb.transform.position;
-                }
-                //check nearest node against nearby nodes to prune dead nodes
-                //if we have a node of this type, and it's within half our check distance
-                if (nearestNodesByType[c] != null && (nearestNodesByType[c].Value - (Vector2)transform.position).sqrMagnitude < (resourceNodeCheckDistance / 2) * (resourceNodeCheckDistance / 2))
-                {
-                    //try to find it in our nearest node collection
-                    bool isPresent = false;
-                    foreach (MonoBehaviour node in nearbyResourceNodes)
-                        if (node != null && (Vector2)node.transform.position == nearestNodesByType[c].Value)
-                            isPresent = true;
-                    //if we can't, mark it as dead
-                    if (!isPresent)
-                        deadLocations.Add(nearestNodesByType[c].Value);
-                }
-            }
+                NodeCheck(c);
         #endregion
 
         //camp check
@@ -489,14 +469,14 @@ public class Human : MonoBehaviour {
                     if (canDoBoth)
                     {
                         targetPos = closestNode;
-                        targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value];
+                        targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value]*.9f;
                         Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.magenta, .1f);
                     }
                     //otherwise go to the camp
                     else
                     {
                         targetPos = closestCamp;
-                        targetPosTolerance = Camp.minInteractRadius;
+                        targetPosTolerance = Camp.minInteractRadius*.9f;
                         Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.green, .1f);
                     }
                 }
@@ -532,7 +512,7 @@ public class Human : MonoBehaviour {
                 if (closestNode != null)
                 {
                     targetPos = closestNode;
-                    targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value];
+                    targetPosTolerance = harvestRangesByResourceType[(int)closestNodeType.Value]*.9f;
                     Debug.DrawRay(transform.position, targetPos.Value - (Vector2)transform.position, Color.green, .1f);
                 }
             }
@@ -541,7 +521,7 @@ public class Human : MonoBehaviour {
             {
                 //go to nearest camp
                 targetPos = closestCamp;
-                targetPosTolerance = Camp.minInteractRadius;
+                targetPosTolerance = Camp.minInteractRadius*.9f;
                 Debug.DrawRay(transform.position, targetPos.Value-(Vector2)transform.position, Color.blue, .1f);
             }
 
@@ -559,6 +539,10 @@ public class Human : MonoBehaviour {
                 targetPosTolerance = defaultTargetTolerance;
 
                 //target reached, do stuff
+                for (int c = 0; c < resourceNodeCheckSeed.Length; c++)
+                    NodeCheck(c);
+                CampCheck();
+                Actions();
             }
             else
                 myMover.SetVelocity((Vector2)(targetPos - (Vector2)gameObject.transform.position), 1.0f);
@@ -581,6 +565,32 @@ public class Human : MonoBehaviour {
             float distanceToCampSqr = ((Vector2)mb.gameObject.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (nearestCamp == null || distanceToCampSqr < (nearestCamp - (Vector2)transform.position).Value.sqrMagnitude)
                 nearestCamp = mb.transform.position;
+        }
+    }
+
+    void NodeCheck(int c)
+    {
+        //add any in-range nodes of that resource to our hash set
+        nearbyResourceNodesByType[c] = myGOT.GetObjsInRange(transform.position, resourceNodeCheckDistance, c);
+        foreach (ResourceNode mb in nearbyResourceNodesByType[c])
+        {
+            resourceLocationsByType[c].Add(mb.gameObject.transform.position);
+            harvestRangesByResourceType[c] = mb.GetHarvestRange(transform.position);
+            if (nearestNodesByType[c] == null || ((Vector2)mb.transform.position - (Vector2)transform.position).sqrMagnitude < (nearestNodesByType[c] - (Vector2)transform.position).Value.sqrMagnitude)
+                nearestNodesByType[c] = mb.transform.position;
+        }
+        //check nearest node against nearby nodes to prune dead nodes
+        //if we have a node of this type, and it's within half our check distance
+        if (nearestNodesByType[c] != null && (nearestNodesByType[c].Value - (Vector2)transform.position).sqrMagnitude < (resourceNodeCheckDistance / 2) * (resourceNodeCheckDistance / 2))
+        {
+            //try to find it in our nearest node collection
+            bool isPresent = false;
+            foreach (MonoBehaviour node in nearbyResourceNodesByType[c])
+                if (node != null && (Vector2)node.transform.position == nearestNodesByType[c].Value)
+                    isPresent = true;
+            //if we can't, mark it as dead
+            if (!isPresent)
+                deadLocations.Add(nearestNodesByType[c].Value);
         }
     }
 
@@ -636,30 +646,31 @@ public class Human : MonoBehaviour {
             }
         }
         //gather from all resources that are within their harvest range
-        foreach (ResourceNode rn in nearbyResourceNodes)
-        {
-            //humans gather more often than they check for resources, so they'll try to harvest for a second after the resource expires
-            //we don't want exceptions, so check for null first
-            if (rn == null) continue;
-
-            //since we're iterating anyway, check if this node is closer than our closest for its type
-            float distanceToNodeSqr = ((Vector2)rn.gameObject.transform.position - (Vector2)transform.position).sqrMagnitude;
-            ResourceType nodeType = rn.ResourceType;
-            if (nearestNodesByType[(int)nodeType] == null || distanceToNodeSqr < (nearestNodesByType[(int)nodeType] - (Vector2)transform.position).Value.sqrMagnitude)
-                nearestNodesByType[(int)nodeType] = rn.transform.position; //make it the new closest if it is
-
-            //range check
-            float rnHarvestRange = rn.GetHarvestRange(transform.position); //this will be somewhat expensive for water, so we don't want to call it twice
-            if (distanceToNodeSqr < rnHarvestRange * rnHarvestRange)
+        for (int c = 0; c < resourceNodeCheckSeed.Length; c++)
+            foreach (ResourceNode rn in nearbyResourceNodesByType[c])
             {
-                float requestAmt = carryingCapacity - inventory[(int)rn.ResourceType]; //request enough to get you to your carrying capacity
-                float gatherAmt = rn.Harvest(requestAmt); //save the actual amount harvested
-                inventory[(int)rn.ResourceType] += gatherAmt; //add amount harvested to inventory
-                //less harvested thhan requested means the node ran dry
-                if (gatherAmt < requestAmt) //add it to dead locations
-                    deadLocations.Add(rn.gameObject.transform.position);
+                //humans gather more often than they check for resources, so they'll try to harvest for a second after the resource expires
+                //we don't want exceptions, so check for null first
+                if (rn == null) continue;
+
+                //since we're iterating anyway, check if this node is closer than our closest for its type
+                float distanceToNodeSqr = ((Vector2)rn.gameObject.transform.position - (Vector2)transform.position).sqrMagnitude;
+                ResourceType nodeType = rn.ResourceType;
+                if (nearestNodesByType[(int)nodeType] == null || distanceToNodeSqr < (nearestNodesByType[(int)nodeType] - (Vector2)transform.position).Value.sqrMagnitude)
+                    nearestNodesByType[(int)nodeType] = rn.transform.position; //make it the new closest if it is
+
+                //range check
+                float rnHarvestRange = rn.GetHarvestRange(transform.position); //this will be somewhat expensive for water, so we don't want to call it twice
+                if (distanceToNodeSqr < rnHarvestRange * rnHarvestRange)
+                {
+                    float requestAmt = carryingCapacity - inventory[(int)rn.ResourceType]; //request enough to get you to your carrying capacity
+                    float gatherAmt = rn.Harvest(requestAmt); //save the actual amount harvested
+                    inventory[(int)rn.ResourceType] += gatherAmt; //add amount harvested to inventory
+                                                                  //less harvested thhan requested means the node ran dry
+                    if (gatherAmt < requestAmt) //add it to dead locations
+                        deadLocations.Add(rn.gameObject.transform.position);
+                }
             }
-        }
     }
 
     public void Tag(float atkValue)
