@@ -334,6 +334,49 @@ public class MapInfo : MonoBehaviour {
         float altmod = 1 - (Math.Abs(alt) / 6);
         return altmod;
     }
+
+    public Mesh GetBlankMeshFilterPlane(float precision)
+    {
+        Vector2 centerPoint = mapPos + mapSize / 2;
+        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), centerPoint, Quaternion.identity);
+        Mesh theMesh = ((MeshFilter)meshPrefab.GetComponent(typeof(MeshFilter))).mesh;
+        Vector2 meshSize = new Vector2((int)(mapSize.x / precision), (int)(mapSize.y / precision));
+        Vector3[] vertices = new Vector3[(int)meshSize.x * (int)meshSize.y];
+        int[] triangles = new int[(((int)meshSize.x - 1) * ((int)meshSize.y - 1)) * 6];
+        //int currentTriCluster = 0;
+        for (int row = 0; row < meshSize.x-1; row++)
+        {
+            for (int col = 0; col < meshSize.y-1; col++)
+            {
+                //indices
+                int current = (int)meshSize.x * row + col;
+                int next = current + 1;
+                int nextRow = current + (int)meshSize.x;
+                int nextRowNext = nextRow + 1;
+
+                if (col == 0)
+                {
+                    vertices[current] = new Vector3(col, row);
+                    vertices[next] = new Vector3(col + 1, row);
+                }
+                vertices[nextRow] = new Vector3(col, row + 1);
+                vertices[nextRowNext] = new Vector3(col + 1, row + 1);
+
+                //int currentTriCluster = current * 6;
+                int currentTriCluster = (((int)meshSize.x - 1) * row + col) *6;
+                triangles[currentTriCluster] = current;
+                triangles[currentTriCluster + 1] = nextRow;
+                triangles[currentTriCluster + 2] = next;
+                triangles[currentTriCluster + 3] = next;
+                triangles[currentTriCluster + 4] = nextRow;
+                triangles[currentTriCluster + 5] = nextRowNext;
+                //currentTriCluster += 6;
+            }
+        }
+        theMesh.vertices = vertices;
+        theMesh.triangles = triangles;
+        return theMesh;
+    }
 }
 
 public class DayEndEventArgs : EventArgs

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Collections;
 
 public class GOTracker : MonoBehaviour {
     Dictionary<Vector2,List<MonoBehaviour>>[] objDictionary;
@@ -30,13 +31,19 @@ public class GOTracker : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        
+        //StartCoroutine(GetDensityMaps());
 	}
 	
 	// Update is called once per frame
 	void Update () {
 	    
 	}
+    IEnumerator GetDensityMaps()
+    {
+        yield return null;
+
+        mi.GetBlankMeshFilterPlane(5);
+    }
 
     public void GenerateObjs(List<Vector2> waterLocations)
     {
