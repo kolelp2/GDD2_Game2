@@ -688,7 +688,7 @@ public class Human : MonoBehaviour {
 
 
         //report death to GO tracker
-        myGOT.ReportDeath(this, (int)ObjectType.Human);
+        //myGOT.ReportDeath(this, (int)ObjectType.Human);
         //add zombie script
         gameObject.AddComponent(typeof(Zombie));
         //destroy this script

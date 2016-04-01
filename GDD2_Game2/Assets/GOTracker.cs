@@ -36,6 +36,12 @@ public class GOTracker : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+        //win
+        if (unitCountsByType[(int)ObjectType.Human] <= 0)
+            ;
+        //lose
+        else if (unitCountsByType[(int)ObjectType.Zombie] <= 0)
+            ;
 	    
 	}
     IEnumerator GetDensityMaps()

@@ -108,9 +108,13 @@ public class Zombie : MonoBehaviour {
         if (!(UnityEngine.Random.value < failRate))
         {
             success = true;
-            myGOT.ReportDeath(this, ObjectType.Zombie);
             Destroy(gameObject);
-            Destroy(this);
+            //Destroy(this);
         }
+    }
+
+    void OnDestroy()
+    {
+        myGOT.ReportDeath(this, ObjectType.Zombie);
     }
 }
