@@ -75,6 +75,7 @@ public class Human : MonoBehaviour {
     //other components
     Mover myMover; //on the human
     GOTracker myGOT; //not on the human
+    MapInfo mi;
     Stats myStats;
 
     //nearby actors
@@ -212,6 +213,7 @@ public class Human : MonoBehaviour {
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
         myStats = (Stats)gameObject.GetComponent(typeof(Stats));
         myGOT.ReportCreation(ObjectType.Human);
+        mi = (MapInfo)map.GetComponent(typeof(MapInfo));
 
         //subscribe to day events
         MapInfo.DayEndEvent += OnDayEnd;
@@ -383,9 +385,7 @@ public class Human : MonoBehaviour {
             if (!allNodeTypesKnown)
             {
                 //wander until we do
-                if (wanderDirection == null || wanderDirection == Vector2.zero)
-                    wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
-                targetPos = (Vector2)transform.position + wanderDirection * 50;
+                Wander();
             }
             //if we have all the node types but no camp
             else if (nearestCamp == null)
@@ -454,9 +454,7 @@ public class Human : MonoBehaviour {
                 else if (!(closestCampIsWalkable || closestNodeIsWalkable))
                 {
                     //if nothing is walkable, wander
-                    if (wanderDirection == null)
-                        wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
-                    targetPos = (Vector2)transform.position + wanderDirection * 50;
+                    Wander();
                 }
                 //if both are walkable...
                 else
@@ -564,6 +562,19 @@ public class Human : MonoBehaviour {
             float distanceToCampSqr = ((Vector2)mb.gameObject.transform.position - (Vector2)transform.position).sqrMagnitude;
             if (nearestCamp == null || distanceToCampSqr < (nearestCamp - (Vector2)transform.position).Value.sqrMagnitude)
                 nearestCamp = mb.transform.position;
+        }
+    }
+
+    void Wander()
+    {
+        if (wanderDirection == null || wanderDirection == Vector2.zero)
+            wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+        targetPos = (Vector2)transform.position + wanderDirection * 50;
+
+        if(!mi.IsWorldPosOnMap(targetPos.Value))
+        {
+            wanderDirection = null;
+            Wander();
         }
     }
 
