@@ -14,6 +14,7 @@ public class Mover : MonoBehaviour {
     float altitudeModifier = 1.0f;
     MapInfo mi;
     SpriteRenderer sr;
+    Transform myTransform;
     public float MaxMoveSpeed
     {
         get { return maxMoveSpeed; }
@@ -30,6 +31,7 @@ public class Mover : MonoBehaviour {
     float turnSpeed = 4.0f; //higher means sharper turns
     void Awake()
     {
+        myTransform = transform;
         maxMoveSpeed = UnityEngine.Random.value * speedVariance + minSpeed;
     }
 
@@ -43,18 +45,18 @@ public class Mover : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        //Debug.DrawRay(gameObject.transform.position, velocity*altitudeModifier, Color.red, Time.deltaTime);
-        this.transform.position += (new Vector3(velocity.x, velocity.y)) * Time.deltaTime * altitudeModifier;
+        //Debug.DrawRay(gameObject.myTransform.position, velocity*altitudeModifier, Color.red, Time.deltaTime);
+        this.myTransform.position += (new Vector3(velocity.x, velocity.y)) * Time.deltaTime * altitudeModifier;
         //work up to the target velocity over time
         if (Time.frameCount % velocityUpdateInterval == velocityUpdateSeed)
             velocity = (velocity + targetVelocity * turnSpeed * Time.deltaTime * velocityUpdateInterval).normalized * targetVelocity.magnitude;
         //check altitude modifier every few frames
         if (Time.frameCount % altitudeModUpdateInterval == altitudeModUpdateSeed)
-            altitudeModifier = mi.GetSpeedModifierFromAltitudeAtPos(transform.position);
+            altitudeModifier = mi.GetSpeedModifierFromAltitudeAtPos(myTransform.position);
         if (velocity != Vector2.zero)
         {
             var angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
-            transform.rotation = Quaternion.AngleAxis(angle-90, Vector3.forward);
+            myTransform.rotation = Quaternion.AngleAxis(angle-90, Vector3.forward);
         }
     }
 

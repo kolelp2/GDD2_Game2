@@ -7,6 +7,8 @@ public class GOTracker : MonoBehaviour {
     Dictionary<Vector2,List<MonoBehaviour>>[] objDictionary;
     Dictionary<MonoBehaviour, Vector2> unitWorldPositions = new Dictionary<MonoBehaviour, Vector2>();
     int[] unitCountsByType = new int[Enum.GetValues(typeof(ObjectType)).Length];
+    Mesh[] densityMapsByObjectType = new Mesh[Enum.GetValues(typeof(ObjectType)).Length];
+    Color[] densityMapColors = new Color[Enum.GetValues(typeof(ObjectType)).Length];
 
     public readonly static int resourceNodeTypeCount = 3;
 
@@ -20,6 +22,10 @@ public class GOTracker : MonoBehaviour {
     int startingHumans = 2000;
     [SerializeField]
     int startingZombies = 10;
+    [SerializeField]
+    int densityMapPrecision = 20;
+
+    bool updatingDensityMaps = false;
 
     void Awake()
     {
@@ -31,7 +37,7 @@ public class GOTracker : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        //StartCoroutine(GetDensityMaps());
+        StartCoroutine(GetDensityMaps());
 	}
 	
 	// Update is called once per frame
@@ -42,13 +48,57 @@ public class GOTracker : MonoBehaviour {
         //lose
         else if (unitCountsByType[(int)ObjectType.Zombie] <= 0)
             ;
-	    
+
+        if (!updatingDensityMaps)
+            StartCoroutine(UpdateDensityMaps());
 	}
     IEnumerator GetDensityMaps()
     {
         yield return null;
 
-        mi.GetBlankMeshFilterPlane(5);
+        for(int c = 0;c<densityMapsByObjectType.Length;c++)
+        {
+            densityMapsByObjectType[c] = mi.GetBlankMeshFilterPlane(densityMapPrecision);
+        }
+
+        for (int n = 0; n < densityMapColors.Length; n++)
+        {
+            densityMapColors[n] = Color.HSVToRGB((float)n * (1.0f / (float)densityMapColors.Length), 1, 1);
+        }
+    }
+
+    IEnumerator UpdateDensityMaps()
+    {
+        yield return null;
+        updatingDensityMaps = true;
+        float vertexProximityRadius = 20;
+        float maxAlphaPercentage = .1f;
+        int verticesThisFrame = 0;
+        int maxVerticesPerFrame = 50;
+        for(int type = 0; type < densityMapsByObjectType.Length; type++)
+        {
+            if (type != (int)ObjectType.Human && type != (int)ObjectType.Zombie)
+                continue;
+
+            Vector3[] vertices = densityMapsByObjectType[type].vertices;
+            Color[] mapColors = new Color[vertices.Length];
+            Color mapColor = densityMapColors[type];
+
+            for(int n = 0;n<vertices.Length;n++)
+            {
+                int unitProximityCount = GetObjsInRange(mi.GridToWorldSpace(vertices[n], 1), vertexProximityRadius, type).Count;
+                float scaledProximityPercentage = (unitCountsByType[type] != 0) ? ((float)unitProximityCount / (float)unitCountsByType[type]) / maxAlphaPercentage : 0;
+                mapColors[n] = new Color(mapColor.r, mapColor.g, mapColor.b, (scaledProximityPercentage < 1) ? scaledProximityPercentage/2.0f : .5f);
+                verticesThisFrame++;
+                if (verticesThisFrame >= maxVerticesPerFrame)
+                {
+                    yield return null;
+                    verticesThisFrame = 0;
+                }
+            }
+            densityMapsByObjectType[type].colors = mapColors;
+        }
+        updatingDensityMaps = false;
     }
 
     public void GenerateObjs(List<Vector2> waterLocations)

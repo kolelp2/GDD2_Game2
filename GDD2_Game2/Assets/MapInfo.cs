@@ -40,13 +40,15 @@ public class MapInfo : MonoBehaviour {
     {
         get { return mapPos; }
     }
-    // Use this for initialization
-    void Start () {
+    void Awake()
+    {
         BoxCollider2D mapBox = (BoxCollider2D)gameObject.GetComponent(typeof(BoxCollider2D));
         mapSize = mapBox.size;
 
         mapPos = new Vector2(mapBox.transform.position.x - mapBox.size.x / 2, mapBox.transform.position.y - mapBox.size.y / 2);
-
+    }
+    // Use this for initialization
+    void Start () {
         //place tiles
         //get number of tiles in both directions
         int tileX = (int)Math.Ceiling(mapSize.x / tileDimension);
@@ -338,11 +340,12 @@ public class MapInfo : MonoBehaviour {
     public Mesh GetBlankMeshFilterPlane(float precision)
     {
         Vector2 centerPoint = mapPos + mapSize / 2;
-        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), centerPoint, Quaternion.identity);
+        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), mapPos, Quaternion.identity);
         Mesh theMesh = ((MeshFilter)meshPrefab.GetComponent(typeof(MeshFilter))).mesh;
-        Vector2 meshSize = new Vector2((int)(mapSize.x / precision), (int)(mapSize.y / precision));
+        Vector2 meshSize = new Vector2((int)(Math.Ceiling(mapSize.x / precision))+1, (int)(Math.Ceiling(mapSize.y / precision))+1);
         Vector3[] vertices = new Vector3[(int)meshSize.x * (int)meshSize.y];
         int[] triangles = new int[(((int)meshSize.x - 1) * ((int)meshSize.y - 1)) * 6];
+        
         //int currentTriCluster = 0;
         for (int row = 0; row < meshSize.x-1; row++)
         {
@@ -354,13 +357,17 @@ public class MapInfo : MonoBehaviour {
                 int nextRow = current + (int)meshSize.x;
                 int nextRowNext = nextRow + 1;
 
-                if (col == 0)
+                if (row == 0)
                 {
-                    vertices[current] = new Vector3(col, row);
-                    vertices[next] = new Vector3(col + 1, row);
+                    vertices[current] = new Vector3(col, row)*precision;
+                    Debug.DrawRay(GridToWorldSpace(vertices[current], 1), new Vector2(0, 1), Color.blue, float.MaxValue);
+                    vertices[next] = new Vector3(col + 1, row)*precision;
+                    Debug.DrawRay(GridToWorldSpace(vertices[next], 1), new Vector2(0, 1), Color.blue, float.MaxValue);
                 }
-                vertices[nextRow] = new Vector3(col, row + 1);
-                vertices[nextRowNext] = new Vector3(col + 1, row + 1);
+                vertices[nextRow] = new Vector3(col, row + 1)*precision;
+                Debug.DrawRay(GridToWorldSpace(vertices[nextRow], 1), new Vector2(0, 1), Color.blue, float.MaxValue);
+                vertices[nextRowNext] = new Vector3(col + 1, row + 1)*precision;
+                Debug.DrawRay(GridToWorldSpace(vertices[nextRowNext], 1), new Vector2(0, 1), Color.blue, float.MaxValue);
 
                 //int currentTriCluster = current * 6;
                 int currentTriCluster = (((int)meshSize.x - 1) * row + col) *6;
@@ -371,10 +378,16 @@ public class MapInfo : MonoBehaviour {
                 triangles[currentTriCluster + 4] = nextRow;
                 triangles[currentTriCluster + 5] = nextRowNext;
                 //currentTriCluster += 6;
+                
             }
         }
+        Color[] color = new Color[vertices.Length];
+        for (int c = 0; c < color.Length; c++)
+            color[c] = new Color(0, 0, 0, 0);
+
         theMesh.vertices = vertices;
         theMesh.triangles = triangles;
+        theMesh.colors = color;
         return theMesh;
     }
 }

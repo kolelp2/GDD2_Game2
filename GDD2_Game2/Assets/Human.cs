@@ -69,6 +69,7 @@ public class Human : MonoBehaviour {
     static float statTransferPercentage = .05f;
     static float staminaPerSecond = .5f;
     static int campingFrames = 3;
+    static float drawDepth = -.05f;
     #endregion
 
     #region members
@@ -247,6 +248,8 @@ public class Human : MonoBehaviour {
         moveSeed = (int)Math.Round(UnityEngine.Random.value * (moveInterval-1));
         locationPruneSeed = (int)Math.Round(UnityEngine.Random.value * (locationPruneInterval - 1));
         drainSeed = (int)Math.Round(UnityEngine.Random.value * (drainInterval - 1));
+
+        transform.position += new Vector3(0, 0, drawDepth);
     }
 	
 	// Update is called once per frame
@@ -355,11 +358,11 @@ public class Human : MonoBehaviour {
                 for (int c = 0; c < resourceLocationsByType.Length; c++)
                 {
                     resourceLocationsByType[c].Remove(deadLocation);
-                    if (nearestNodesByType[c].Value == deadLocation)
+                    if (nearestNodesByType[c].HasValue && nearestNodesByType[c].Value == deadLocation)
                         nearestNodesByType[c] = null;
                 }
                 campLocations.Remove(deadLocation);
-                if (nearestCamp.Value == deadLocation)
+                if (nearestCamp.HasValue && nearestCamp.Value == deadLocation)
                     nearestCamp = null;
                 deadLocationsArchive.Add(deadLocation); //make sure to add each dead location to the archive
             }
