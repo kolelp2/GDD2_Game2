@@ -51,7 +51,7 @@ public class Food : ResourceNode
         Vector2 newPosition;
         do
             newPosition = transform.position + (Vector3)(UnityEngine.Random.insideUnitCircle * respawnDistance);
-        while (mi.GetAltitudeAtPos(newPosition) != 0);
+        while (mi.GetAltitudeAtPos(newPosition) != 0 || !mi.IsWorldPosOnMap(newPosition));
         transform.position = new Vector3(newPosition.x, newPosition.y, drawDepth);
         stock = initialStock;
         myGOT.Report(this, (int)ObjectType.Food);

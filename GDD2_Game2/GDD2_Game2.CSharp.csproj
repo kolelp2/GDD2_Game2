@@ -73,6 +73,7 @@
     <Compile Include="Assets\Human.cs" />
     <Compile Include="Assets\MapInfo.cs" />
     <Compile Include="Assets\Minimap.cs" />
+    <Compile Include="Assets\MinimapCollider.cs" />
     <Compile Include="Assets\Mover.cs" />
     <Compile Include="Assets\Stats.cs" />
     <Compile Include="Assets\UI.cs" />

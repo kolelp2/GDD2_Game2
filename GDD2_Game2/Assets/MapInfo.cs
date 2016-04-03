@@ -66,7 +66,7 @@ public class MapInfo : MonoBehaviour {
                 spriteRotations[row, col] = rotation;
                 //instantate the tile at the current position in the grid
                 //this means transforming from grid space to world space, accounting for the fact that the grid is bottom-left anchored and the tile objects are center-anchored, and correcting for the map's offset
-                int tileType = UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
+                int tileType = (row == 0 && col == 0) ? 8 : UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
                 if (tileType > numberOfTiles) //the blank tile may be considered more than once
                     tileType = numberOfTiles;
                 GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile" + tileType), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), rotation);
@@ -390,6 +390,35 @@ public class MapInfo : MonoBehaviour {
         theMesh.colors = color;
         theMesh.bounds = new Bounds(centerPoint, new Vector3(meshSize.x*precision*2, meshSize.y*precision*2, 1));
         return meshPrefab;
+    }
+
+    //returns the point on the map nearest to the given point
+    public Vector2 GetNearestPointOnMap(Vector2 pos)
+    {
+        Vector2 min = mapPos;
+        Vector2 max = mapPos + mapSize;
+        float dx;
+        if (min.x - pos.x > 0)
+            dx = min.x - pos.x;
+        else if (max.x - pos.x < 0)
+            dx = max.x - pos.x;
+        else
+            dx = 0;
+        float dy;
+        if (min.y - pos.y > 0)
+            dy = min.y - pos.y;
+        else if (max.y - pos.y < 0)
+            dy = max.y - pos.y;
+        else
+            dy = 0;
+        return new Vector2(pos.x + dx, pos.y + dy);
+    }
+
+    public Vector3 GetNearestPointOnMap(Vector3 pos)
+    {
+        float z = pos.z;
+        Vector2 point = GetNearestPointOnMap(pos);
+        return new Vector3(point.x, point.y, z);
     }
 }
 

@@ -6,8 +6,13 @@ public class ControlPoint : MonoBehaviour {
     SpriteRenderer sr;
     bool dragging = false; //is this point being mouse-dragged?
     Color color;
+    GameObject mmCP;
     [SerializeField]
-    static float drawDepth = -1.0f;
+    float mmCPScale = 15;
+    [SerializeField]
+    static float drawDepth = -3.0f;
+
+    Transform myTransform;
 
     float strength = 1;
     public float Strength
@@ -23,23 +28,28 @@ public class ControlPoint : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        myTransform = transform;
         GameObject map = GameObject.Find("Map");
         cpm = (CPManager)map.GetComponent(typeof(CPManager));
         sr = (SpriteRenderer)GetComponent(typeof(SpriteRenderer));
+        mmCP = (GameObject)Instantiate(Resources.Load("mm control point"));
+        mmCP.transform.position = transform.position;
+        mmCP.transform.localScale = new Vector3(mmCPScale, mmCPScale, mmCPScale);
         //cpm.AddCP(this);
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
-        transform.localScale = new Vector3(1,1,1) * (1+(Camera.main.orthographicSize/3));
+        myTransform.localScale = new Vector3(1,1,1) * (1+(Camera.main.orthographicSize/3));
         //if we're being mouse-dragged...
 	    if (dragging)
         {
             //set our position to the mouse's X and Y, and use draw depth for Z
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = drawDepth;
-            transform.position = mousePos;
+            myTransform.position = mousePos;
+            mmCP.transform.position = myTransform.position;
             //request a VF recalculation since we moved a control point
             cpm.QueueVFRecalculation();
         }
@@ -50,10 +60,12 @@ public class ControlPoint : MonoBehaviour {
         while(sr == null)
             yield return null;
         sr.color = color;
+        ((SpriteRenderer)mmCP.GetComponent(typeof(SpriteRenderer))).color = color;
     }
 
     void OnDestroy()
     {
+        Destroy(mmCP);
         cpm.RemoveCP(this);
     }
 

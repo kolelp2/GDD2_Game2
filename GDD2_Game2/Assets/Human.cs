@@ -602,14 +602,8 @@ public class Human : MonoBehaviour {
     void Wander()
     {
         if (wanderDirection == null || wanderDirection == Vector2.zero)
-            wanderDirection = UnityEngine.Random.insideUnitCircle.normalized;
+            wanderDirection = (mi.GetRandomMapPosAsWorldPos() - (Vector2)transform.position).normalized;
         targetPos = (Vector2)transform.position + wanderDirection * 50;
-
-        if(!mi.IsWorldPosOnMap(targetPos.Value))
-        {
-            wanderDirection = null;
-            Wander();
-        }
     }
 
     void NodeCheck(int c)

@@ -16,17 +16,10 @@ public class Minimap : MonoBehaviour {
         Vector2 viewPort = new Vector2(minimapSize, ((minimapSize * Screen.width) * (1 / mapWhRatio)) / Screen.height);
         minimap.rect = new Rect(1 - viewPort.x, 1 - viewPort.y, viewPort.x, viewPort.y);
         minimap.transform.position += new Vector3(0, 0, -20);
-        BoxCollider2D bc = (BoxCollider2D)gameObject.GetComponent(typeof(BoxCollider2D));
-        bc.size = mi.MapSize;
     }
 	
 	// Update is called once per frame
 	void Update () {
 	
 	}
-
-    void OnMouseOver()
-    {
-        int stuff = 0;
-    }
 }
