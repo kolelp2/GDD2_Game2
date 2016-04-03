@@ -3,15 +3,29 @@ using System.Collections;
 
 public class Camp : MonoBehaviour {
     [SerializeField]
-    public readonly static float minInteractRadius = .50f;
+    public readonly static float minInteractRadius = 2.0f;
+    [SerializeField]
+    float strengthForHalfMultiplier = 2000;
+    [SerializeField]
+    float multiplierStrength = 5;
     float interationRadius = 3.0f;
-    double multiplier = 1.0;
-    double multiplierMultiplier = .01;
+    float campStrength = 0;
+    public float Multiplier
+    {
+        get
+        {
+            float mult = (1 - (strengthForHalfMultiplier / (campStrength + strengthForHalfMultiplier))) * multiplierStrength;
+            return (mult > 1) ? mult : 1;
+        }
+    }
     Vector3 initialScale;
     static float drawDepth = -.8f;
     public float InteractionRadius
     {
-        get { return interationRadius; }
+        get
+        {
+            return interationRadius;
+        }
     }
     GOTracker myGOT;
     SpriteRenderer mySR;
@@ -38,8 +52,9 @@ public class Camp : MonoBehaviour {
 
     // Update is called once per frame
     void Update () {
-        interationRadius = minInteractRadius * (float)multiplier;
-        mySR.transform.localScale = initialScale * (float)multiplier;
+        float mult = Multiplier;
+        interationRadius = minInteractRadius * mult;
+        mySR.transform.localScale = initialScale * mult;
 	}
 
     //human asks to use a given type of raw resource, camp tells them whether it can give them one
@@ -60,7 +75,7 @@ public class Camp : MonoBehaviour {
                 returnVal += inventory[rawResourceTypeInt];
                 inventory[rawResourceTypeInt] = 0; //and set the inventory to 0
             }
-            //multiplier *= 1 + (multiplierMultiplier * returnVal);
+            campStrength += returnVal;
             return returnVal;
         }
     }
@@ -74,8 +89,10 @@ public class Camp : MonoBehaviour {
             return false;
         else
         {
-            inventory[resourceTypeInt] += (float)multiplier * inv[resourceTypeInt];
+            float depositAmt = inv[resourceTypeInt];
+            inventory[resourceTypeInt] += depositAmt;
             inv[resourceTypeInt] = 0;
+            inventory[(int)ResourceType.Ammo] += 2 * depositAmt;
             return true;
         }
     }
