@@ -58,7 +58,7 @@ public class Human : MonoBehaviour {
     int reportSeed;
     static int moveInterval = 5;
     int moveSeed;
-    static int greetsPerTurn = 5;
+    static int greetsPerTurn = 3;
     static int attackCD = 2;
     int lastAttack = 0;
     float baseAttackRange = 1f;

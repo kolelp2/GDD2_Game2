@@ -340,7 +340,7 @@ public class MapInfo : MonoBehaviour {
     public GameObject GetBlankMeshObject(float precision, float drawDepth = 0)
     {
         Vector2 centerPoint = mapPos + mapSize / 2;
-        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), new Vector3(0,0,drawDepth) + (Vector3)mapPos, Quaternion.identity);
+        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), new Vector3(0, 0, drawDepth) + (Vector3)mapPos, Quaternion.identity);
         Mesh theMesh = ((MeshFilter)meshPrefab.GetComponent(typeof(MeshFilter))).mesh;
         Vector2 meshSize = new Vector2((int)(Math.Ceiling(mapSize.x / precision))+1, (int)(Math.Ceiling(mapSize.y / precision))+1);
         Vector3[] vertices = new Vector3[(int)meshSize.x * (int)meshSize.y];
@@ -388,6 +388,7 @@ public class MapInfo : MonoBehaviour {
         theMesh.vertices = vertices;
         theMesh.triangles = triangles;
         theMesh.colors = color;
+        theMesh.bounds = new Bounds(centerPoint, new Vector3(meshSize.x*precision*2, meshSize.y*precision*2, 1));
         return meshPrefab;
     }
 }

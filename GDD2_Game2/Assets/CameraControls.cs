@@ -14,10 +14,21 @@ public class CameraControls : MonoBehaviour
     [SerializeField]
     float panSpeed = 2;
 
+    MapInfo mi;
+
     void Start()
     {
         targetOrtho = Camera.main.orthographicSize;
         targetPosition = gameObject.transform.position;
+        mi = (MapInfo)GameObject.Find("Map").GetComponent(typeof(MapInfo));
+
+        //calculate max zoom
+        float cameraAR = Camera.main.aspect;
+        float mapWhRatio = mi.MapSize.x / mi.MapSize.y;
+        float cameraToMapRatio = cameraAR / mapWhRatio;
+        float maxOrthoByMapSize = (cameraToMapRatio >= 1) ? (mi.MapSize.y / 2) / cameraToMapRatio: (mi.MapSize.y / 2);
+        if (maxOrthoByMapSize < maxOrtho)
+            maxOrtho = maxOrthoByMapSize;
     }
 
     void Update()
