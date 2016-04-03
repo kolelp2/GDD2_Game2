@@ -22,7 +22,7 @@ public class Human : MonoBehaviour {
     static int targetPickInterval = 20;
     int targetPickSeed;
     [SerializeField]
-    static float zombieCheckDistance = 10.0f;
+    float zombieCheckDistance = 10.0f;
     [SerializeField]
     static int resourceNodeCheckInterval = 480;
     int[] resourceNodeCheckSeed = new int[GOTracker.resourceNodeTypeCount];
@@ -49,7 +49,7 @@ public class Human : MonoBehaviour {
     [SerializeField]
     static int campDelay = 200;
     [SerializeField]
-    static float baseResourceDecayPerDay = 10;
+    static float baseResourceDecayPerDay = 7;
     static int drainInterval = 600;
     int drainSeed;
     static float defaultTargetTolerance = 1;
@@ -61,7 +61,7 @@ public class Human : MonoBehaviour {
     static int greetsPerTurn = 5;
     static int attackCD = 2;
     int lastAttack = 0;
-    float attackRange = 1f;
+    float baseAttackRange = 1f;
     //the amount of skill required to evade tags 50% of the time
     static float skillFor50Percent = 50f;
     static float skillPerEvade = .5f;
@@ -130,7 +130,7 @@ public class Human : MonoBehaviour {
             float foodLimit = lowestProcessedResource;
             float secondsFoodLasts = foodLimit / resourceDecay;
             float optimalDistance = secondsFoodLasts * myMover.MaxMoveSpeed;
-            return optimalDistance * .8f;
+            return optimalDistance * .6f;
         }
     }
 
@@ -198,6 +198,22 @@ public class Human : MonoBehaviour {
         {
             float currentSkill = myStats.GetStat(StatTypes.Skill);
             return skillFor50Percent / (currentSkill + skillFor50Percent);
+        }
+    }
+
+    float UnarmedAttackRange
+    {
+        get
+        {
+            return baseAttackRange + myStats.GetStat(StatTypes.RawStrength);
+        }
+    }
+
+    float ArmedAttackRange
+    {
+        get
+        {
+            return UnarmedAttackRange * myStats.GetStat(StatTypes.InheritedStrength);
         }
     }
     #endregion
@@ -291,9 +307,19 @@ public class Human : MonoBehaviour {
             //set targetpos to a combination of away from zombie and towards nearest/strongest camp
             targetPos = 2 * (Vector2)transform.position - (Vector2)targetZombie.transform.position;
 
+            float attackRange = UnarmedAttackRange;
+            bool usingAmmo = false;
+            if(inventory[(int)ResourceType.Ammo]>0 && myStats.GetStat(StatTypes.InheritedStrength)>1)
+            {
+                attackRange = ArmedAttackRange;
+                usingAmmo = true;
+            }
+
             //tag the zombie
             if (Time.frameCount - lastAttack > attackCD && ((Vector2)targetZombie.transform.position - (Vector2)transform.position).sqrMagnitude < attackRange * attackRange)
             {
+                if(usingAmmo)
+                    inventory[(int)ResourceType.Ammo]--;
                 lastAttack = Time.frameCount;
                 bool success = false;
                 targetZombie.Tag(InverseEvadeChance, out success);
@@ -545,7 +571,12 @@ public class Human : MonoBehaviour {
                 Actions();
             }
             else
-                myMover.SetVelocity((Vector2)(targetPos - (Vector2)gameObject.transform.position), 1.0f);
+            {
+                float moveSpeedAfterStamina = inventory[(int)ResourceType.FoodProcessed] / carryingCapacity;
+                if (moveSpeedAfterStamina <.5f)
+                    moveSpeedAfterStamina = .5f;
+                myMover.SetVelocity((Vector2)(targetPos - (Vector2)gameObject.transform.position), moveSpeedAfterStamina);
+            }
         }
         #endregion
 
@@ -651,11 +682,24 @@ public class Human : MonoBehaviour {
 
             if (distanceToCampSqr < cmp.InteractionRadius * cmp.InteractionRadius)
             {
+                float ammoAmt = inventory[(int)ResourceType.Ammo];
                 for (int c = 0; c <= (int)ResourceType.FuelRaw; c++)
                     cmp.DepositRawResource(inventory, (ResourceType)c);
-                //starting at food, since I don't know how ammo works yet
-                for (int c = (int)ResourceType.FoodProcessed; c < inventory.Length; c++)
-                    inventory[c] += cmp.RequestToUseRawResource((ResourceType)(c - (int)ResourceType.FoodProcessed), carryingCapacity - inventory[c]);
+                for (int c = (int)ResourceType.Ammo; c < inventory.Length; c++)
+                    //grab three times as much ammo as everything else
+                    inventory[c] += cmp.RequestToUseRawResource((ResourceType)(c - (int)ResourceType.Ammo), ((c == (int)ResourceType.Ammo) ? carryingCapacity * 3 : carryingCapacity) - inventory[c]);
+                
+                //get multiplier from camp
+                float campMult = cmp.Multiplier;
+                //if it's greater than our value, it becomes our value
+                if (myStats.GetStat(StatTypes.InheritedStrength) < campMult)
+                    myStats.SetStat(StatTypes.InheritedStrength, campMult);
+                //if it's less than our value, our value becomes the average of the two
+                else
+                    myStats.SetStat(StatTypes.InheritedStrength, (myStats.GetStat(StatTypes.InheritedStrength) + campMult) / 2);
+
+                if (zombieCheckDistance < ArmedAttackRange)
+                    zombieCheckDistance = ArmedAttackRange;
             }
         }
         //gather from all resources that are within their harvest range

@@ -8,8 +8,10 @@ public class GOTracker : MonoBehaviour {
     Dictionary<MonoBehaviour, Vector2> unitWorldPositions = new Dictionary<MonoBehaviour, Vector2>();
     int[] unitCountsByType = new int[Enum.GetValues(typeof(ObjectType)).Length];
     Mesh[] densityMapsByObjectType = new Mesh[Enum.GetValues(typeof(ObjectType)).Length];
+    GameObject[] densityMapObjects = new GameObject[Enum.GetValues(typeof(ObjectType)).Length];
     Color[] densityMapColors = new Color[Enum.GetValues(typeof(ObjectType)).Length];
-
+    Mesh fowMesh;
+    GameObject fowMeshObject;
     public readonly static int resourceNodeTypeCount = 3;
 
     MapInfo mi;
@@ -24,8 +26,17 @@ public class GOTracker : MonoBehaviour {
     int startingZombies = 10;
     [SerializeField]
     int densityMapPrecision = 20;
+    [SerializeField]
+    int fowPrecision = 5;
+    [SerializeField]
+    float fowClearRadius = 60;
+    [SerializeField]
+    int fowVerticesPerFrame = 50;
+    [SerializeField]
+    int densityMapVerticesPerFrame = 50;
 
     bool updatingDensityMaps = false;
+    bool updatingFOW = false;
 
     void Awake()
     {
@@ -38,27 +49,40 @@ public class GOTracker : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         StartCoroutine(GetDensityMaps());
+        StartCoroutine(GetFogOfWarMesh());
 	}
 	
 	// Update is called once per frame
 	void Update () {
         //win
-        if (unitCountsByType[(int)ObjectType.Human] <= 0)
-            ;
+        if (Time.frameCount>1000 && unitCountsByType[(int)ObjectType.Human] <= 0)
+            Application.LoadLevel("EndScreen_Lose");
         //lose
-        else if (unitCountsByType[(int)ObjectType.Zombie] <= 0)
-            ;
+        else if (Time.frameCount > 1000 && unitCountsByType[(int)ObjectType.Zombie] <= 0)
+            Application.LoadLevel("EndScreen_Win");
+
+        if (Input.GetKeyDown(KeyCode.E))
+            ToggleDensityMapVisibility();
 
         if (!updatingDensityMaps)
             StartCoroutine(UpdateDensityMaps());
+        if (!updatingFOW)
+            StartCoroutine(UpdateFOWMesh());
 	}
+    void ToggleDensityMapVisibility()
+    {
+        foreach (GameObject mo in densityMapObjects)
+            mo.SetActive(!mo.activeInHierarchy);
+    }
+
     IEnumerator GetDensityMaps()
     {
         yield return null;
 
         for(int c = 0;c<densityMapsByObjectType.Length;c++)
         {
-            densityMapsByObjectType[c] = mi.GetBlankMeshFilterPlane(densityMapPrecision);
+            densityMapObjects[c] = mi.GetBlankMeshObject(densityMapPrecision);
+            densityMapsByObjectType[c] = ((MeshFilter)(densityMapObjects[c].GetComponent(typeof(MeshFilter)))).mesh;
         }
 
         for (int n = 0; n < densityMapColors.Length; n++)
@@ -67,14 +91,48 @@ public class GOTracker : MonoBehaviour {
         }
     }
 
+    IEnumerator GetFogOfWarMesh()
+    {
+        yield return null;
+        fowMeshObject = mi.GetBlankMeshObject(fowPrecision, -2);
+        fowMesh = ((MeshFilter)(fowMeshObject.GetComponent(typeof(MeshFilter)))).mesh;
+        Color[] colors = new Color[fowMesh.vertexCount];
+        for (int c = 0; c < colors.Length; c++)
+            colors[c] = new Color(0, 0, 0, 1);
+        fowMesh.colors = colors;
+    }
+
+    IEnumerator UpdateFOWMesh()
+    {
+        updatingFOW = true;
+        yield return null;
+        Vector3[] vertices = fowMesh.vertices;
+        Color[] newColors = new Color[vertices.Length];
+        int verticesThisFrame = 0;
+        for (int c = 0; c < newColors.Length; c++)
+        {
+            if (GetObjsInRange(mi.GridToWorldSpace(vertices[c],1), 60, ObjectType.Zombie).Count > 0)
+                newColors[c] = new Color(0, 0, 0, 0);
+            else
+                newColors[c] = new Color(0, 0, 0, 1);
+            verticesThisFrame++;
+            if (verticesThisFrame > fowVerticesPerFrame)
+            {
+                yield return null;
+                verticesThisFrame = 0;
+            }
+        }
+        fowMesh.colors = newColors;
+        updatingFOW = false;
+    }
+
     IEnumerator UpdateDensityMaps()
     {
         yield return null;
         updatingDensityMaps = true;
         float vertexProximityRadius = 20;
-        float maxAlphaPercentage = .1f;
+        float maxAlphaPercentage = .05f;
         int verticesThisFrame = 0;
-        int maxVerticesPerFrame = 50;
         for(int type = 0; type < densityMapsByObjectType.Length; type++)
         {
             if (type != (int)ObjectType.Human && type != (int)ObjectType.Zombie)
@@ -90,7 +148,7 @@ public class GOTracker : MonoBehaviour {
                 float scaledProximityPercentage = (unitCountsByType[type] != 0) ? ((float)unitProximityCount / (float)unitCountsByType[type]) / maxAlphaPercentage : 0;
                 mapColors[n] = new Color(mapColor.r, mapColor.g, mapColor.b, (scaledProximityPercentage < 1) ? scaledProximityPercentage/2.0f : .5f);
                 verticesThisFrame++;
-                if (verticesThisFrame >= maxVerticesPerFrame)
+                if (verticesThisFrame >= densityMapVerticesPerFrame)
                 {
                     yield return null;
                     verticesThisFrame = 0;
@@ -118,7 +176,9 @@ public class GOTracker : MonoBehaviour {
         //generate humans
         for (int c = 0; c < startingHumans; c++)
         {
-            Instantiate(Resources.Load("Human"), mi.GetRandomSeaLevelMapPosAsWorldPos(), Quaternion.identity);
+            float spawnRadius = 50;
+            Vector2 location = waterLocations[(int)Math.Floor(UnityEngine.Random.value * waterLocations.Count)];
+            Instantiate(Resources.Load("Human"), location + UnityEngine.Random.insideUnitCircle * spawnRadius, Quaternion.identity);
         }
 
         //generate zombies

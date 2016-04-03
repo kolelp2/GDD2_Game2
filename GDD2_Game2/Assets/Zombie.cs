@@ -20,6 +20,7 @@ public class Zombie : MonoBehaviour {
     int updateSeed;
     static int attackCD = 2;
     int lastAttack = 0;
+    float drawDepth = -.02f;
     //ratio between distance to nearest CP and distance to target below which the cp will be preferred
     //so a ratio of 3 means that the nearest control point will be preferred if it is less than 3 times as far away as the target
     static float cpBoundingRatio = 1;
@@ -32,6 +33,7 @@ public class Zombie : MonoBehaviour {
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
         myGOT.ReportCreation(ObjectType.Zombie);
         updateSeed = (int)Math.Round(UnityEngine.Random.value * (updateInterval-1));
+        transform.position += new Vector3(0, 0, drawDepth);
 	}
 	
 	// Update is called once per frame

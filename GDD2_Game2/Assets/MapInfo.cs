@@ -237,7 +237,7 @@ public class MapInfo : MonoBehaviour {
         return new Vector2(x, y);
     }
 
-    public Vector2 GetRandomSeaLevelMapPosAsWorldPos()
+    public Vector2 GetRandomSeaLevelMapPosAsWorldPos(float distanceFromWater = float.MaxValue)
     {
         Vector2 pos;
         do
@@ -337,10 +337,10 @@ public class MapInfo : MonoBehaviour {
         return altmod;
     }
 
-    public Mesh GetBlankMeshFilterPlane(float precision)
+    public GameObject GetBlankMeshObject(float precision, float drawDepth = 0)
     {
         Vector2 centerPoint = mapPos + mapSize / 2;
-        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), mapPos, Quaternion.identity);
+        GameObject meshPrefab = (GameObject)Instantiate(Resources.Load("BlankMeshPlane"), new Vector3(0,0,drawDepth) + (Vector3)mapPos, Quaternion.identity);
         Mesh theMesh = ((MeshFilter)meshPrefab.GetComponent(typeof(MeshFilter))).mesh;
         Vector2 meshSize = new Vector2((int)(Math.Ceiling(mapSize.x / precision))+1, (int)(Math.Ceiling(mapSize.y / precision))+1);
         Vector3[] vertices = new Vector3[(int)meshSize.x * (int)meshSize.y];
@@ -388,7 +388,7 @@ public class MapInfo : MonoBehaviour {
         theMesh.vertices = vertices;
         theMesh.triangles = triangles;
         theMesh.colors = color;
-        return theMesh;
+        return meshPrefab;
     }
 }
 

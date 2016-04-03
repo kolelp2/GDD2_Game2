@@ -13,7 +13,7 @@ public class Stats : MonoBehaviour {
 	void Start () {
 	    for(int c = 0; c < stats.Length; c++)
         {
-            stats[c] = (c == (int)StatTypes.InheritedStrength) ? 0 : UnityEngine.Random.Range(rawStatMin, rawStatMax);
+            stats[c] = (c == (int)StatTypes.InheritedStrength) ? 1 : UnityEngine.Random.Range(rawStatMin, rawStatMax);
         }
 	}
 	
@@ -29,6 +29,10 @@ public class Stats : MonoBehaviour {
     public float GetStat(StatTypes stat)
     {
         return stats[(int)stat];
+    }
+    public void SetStat(StatTypes stat, float value)
+    {
+        stats[(int)stat] = value;
     }
 }
 

@@ -4,12 +4,16 @@ using System.Collections;
 public class Food : ResourceNode
 {
     GOTracker myGOT;
+    MapInfo mi;
 
     [SerializeField]
-    float stock = 3000;
+    float initialStock = 3000;
+    [SerializeField]
+    float respawnDistance = 50;
     [SerializeField]
     public readonly static float harvestRange = .7f;
     static float drawDepth = -.5f;
+    float stock;
 
     public override ResourceType ResourceType
     {
@@ -18,7 +22,10 @@ public class Food : ResourceNode
 
     // Use this for initialization
     void Start () {
-        myGOT = (GOTracker)GameObject.Find("Map").GetComponent(typeof(GOTracker));
+        stock = initialStock;
+        GameObject map = GameObject.Find("Map");
+        myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
+        mi = (MapInfo)map.GetComponent(typeof(MapInfo));
         transform.position += new Vector3(0, 0, drawDepth);
 
         //initializing random food sprites
@@ -36,9 +43,19 @@ public class Food : ResourceNode
         {
             //we ded
             myGOT.ReportDeath(this, ObjectType.Food);
-            Destroy(gameObject);
+            Respawn();
         }
 	}
+    void Respawn()
+    {
+        Vector2 newPosition;
+        do
+            newPosition = transform.position + (Vector3)(UnityEngine.Random.insideUnitCircle * respawnDistance);
+        while (mi.GetAltitudeAtPos(newPosition) != 0);
+        transform.position = new Vector3(newPosition.x, newPosition.y, drawDepth);
+        stock = initialStock;
+        myGOT.Report(this, (int)ObjectType.Food);
+    }
 
     //returns a number of resources to the caller as a float. will match the requested amount until stock is depleted
     public override float Harvest(float amt)
