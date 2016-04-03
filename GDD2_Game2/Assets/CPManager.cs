@@ -15,6 +15,8 @@ public class CPManager : MonoBehaviour {
     Vector2 vfSize;
     //Vector2 mapPos;
 
+    bool drawingVF = false;
+
     bool recalculateVF = false;
     [SerializeField]
     int recalcInterval = 5;
@@ -55,9 +57,9 @@ public class CPManager : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         //debug lines
-        /*for (int n = 0; n < vectorField.GetLength(0); n++)
-            for (int c = 0; c < vectorField.GetLength(1); c++)
-                Debug.DrawRay(mi.GridToWorldSpace((new Vector3(n, c, 0)), vfPrecision), (Vector3)vectorField[n, c].normalized, Color.green, Time.deltaTime);*/
+        if (Application.isEditor && !drawingVF)
+            StartCoroutine(DrawVectorField());
+            
 
         //check for queued VF recalculations at every x frames (where x is recalcInterval)
         if (recalculateVF && Time.frameCount % recalcInterval == 0)
@@ -71,6 +73,24 @@ public class CPManager : MonoBehaviour {
             ClearCPs();
         }
         //if(Input.GetMouseButtonDown(0))
+    }
+
+    IEnumerator DrawVectorField()
+    {
+        drawingVF = true;
+        int pointsThisFrame = 0;
+        for (int n = 0; n < vectorField.GetLength(0); n++)
+            for (int c = 0; c < vectorField.GetLength(1); c++)
+            {
+                Debug.DrawRay(mi.GridToWorldSpace((new Vector3(n, c, -3)), vfPrecision), (Vector3)vectorField[n, c].normalized, Color.magenta, Time.deltaTime * 30);
+                pointsThisFrame++;
+                if (pointsThisFrame > 1000)
+                {
+                    yield return null;
+                    pointsThisFrame = 0;
+                }
+            }
+        drawingVF = false;
     }
 
     void ClearCPs()
