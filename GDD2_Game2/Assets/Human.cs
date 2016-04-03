@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System;
 
 public class Human : MonoBehaviour {
+    Animator myAnimator;
     #region serialized fields
     //parameters
     //mostly just polling intervals and seeds for various things
@@ -225,6 +226,7 @@ public class Human : MonoBehaviour {
     // Use this for initialization
     void Start () {
         //grab scripts
+        myAnimator = GetComponent<Animator>();
         myMover = (Mover)GetComponent(typeof(Mover));
         GameObject map = GameObject.Find("Map");
         myGOT = (GOTracker)map.GetComponent(typeof(GOTracker));
@@ -318,6 +320,7 @@ public class Human : MonoBehaviour {
             //tag the zombie
             if (Time.frameCount - lastAttack > attackCD && ((Vector2)targetZombie.transform.position - (Vector2)transform.position).sqrMagnitude < attackRange * attackRange)
             {
+                myAnimator.SetTrigger("AttackAnimTrigger");
                 if(usingAmmo)
                     inventory[(int)ResourceType.Ammo]--;
                 lastAttack = Time.frameCount;
@@ -737,6 +740,7 @@ public class Human : MonoBehaviour {
         sr.sprite = ZombieSprite;
         Animator animator = (Animator)gameObject.GetComponent(typeof(Animator));
         animator.runtimeAnimatorController = ZombieAnimator;
+        myAnimator = animator;
 
 
         //report death to GO tracker
