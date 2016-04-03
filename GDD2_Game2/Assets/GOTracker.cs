@@ -56,10 +56,10 @@ public class GOTracker : MonoBehaviour {
 	void Update () {
         //win
         if (Time.frameCount>1000 && unitCountsByType[(int)ObjectType.Human] <= 0)
-            Application.LoadLevel("EndScreen_Lose");
+            Application.LoadLevel("EndScreen_Win");
         //lose
         else if (Time.frameCount > 1000 && unitCountsByType[(int)ObjectType.Zombie] <= 0)
-            Application.LoadLevel("EndScreen_Win");
+            Application.LoadLevel("EndScreen_Lose");
 
         if (Input.GetKeyDown(KeyCode.E))
             ToggleDensityMapVisibility();
