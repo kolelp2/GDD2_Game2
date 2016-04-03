@@ -13,8 +13,8 @@ public class Mover : MonoBehaviour {
     int altitudeModUpdateSeed;
     float altitudeModifier = 1.0f;
     MapInfo mi;
-    SpriteRenderer sr;
     Transform myTransform;
+    Animator anim;
     public float MaxMoveSpeed
     {
         get { return maxMoveSpeed; }
@@ -38,7 +38,7 @@ public class Mover : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         mi = (MapInfo)GameObject.Find("Map").GetComponent(typeof(MapInfo));
-        sr = (SpriteRenderer)gameObject.GetComponent(typeof(SpriteRenderer));
+        anim = (Animator)gameObject.GetComponent(typeof(Animator));
         velocityUpdateSeed = (int)Math.Round(UnityEngine.Random.value * (velocityUpdateInterval - 1));
         altitudeModUpdateSeed = (int)Math.Round(UnityEngine.Random.value * (altitudeModUpdateInterval - 1));
     }
@@ -56,8 +56,12 @@ public class Mover : MonoBehaviour {
         if (velocity != Vector2.zero)
         {
             var angle = Mathf.Atan2(velocity.y, velocity.x) * Mathf.Rad2Deg;
-            myTransform.rotation = Quaternion.AngleAxis(angle-90, Vector3.forward);
+            myTransform.rotation = Quaternion.AngleAxis(angle - 90, Vector3.forward);
+            if (!anim.enabled)
+                anim.enabled = true;
         }
+        else
+            anim.enabled = false;
     }
 
     public void SetVelocity(Vector2 direction, float speed)
