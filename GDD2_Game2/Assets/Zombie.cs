@@ -4,6 +4,7 @@ using System.Collections;
 using System;
 
 public class Zombie : MonoBehaviour {
+    Animator myAnimator;
     Mover myMover;
     CPManager myCPM;
     GOTracker myGOT;
@@ -27,6 +28,7 @@ public class Zombie : MonoBehaviour {
     
 	// Use this for initialization
 	void Start () {
+        myAnimator = GetComponent<Animator>();
         myMover = GetComponent<Mover>();
         GameObject map = GameObject.Find("Map");
         myCPM = (CPManager)map.GetComponent(typeof(CPManager));
@@ -54,6 +56,7 @@ public class Zombie : MonoBehaviour {
             //tag
             if (Time.frameCount-lastAttack>attackCD &&(target.transform.position - transform.position).sqrMagnitude <= reach)
             {
+                myAnimator.SetTrigger("AttackAnimTrigger");
                 lastAttack = Time.frameCount;
                 target.Tag(UnityEngine.Random.value);
             }
