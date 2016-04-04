@@ -46,7 +46,7 @@ public class Mover : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
         //Debug.DrawRay(gameObject.myTransform.position, velocity*altitudeModifier, Color.red, Time.deltaTime);
-        this.myTransform.position += (new Vector3(velocity.x, velocity.y)) * Time.deltaTime * altitudeModifier;
+        this.myTransform.position += ((Vector3)velocity) * Time.deltaTime * altitudeModifier;
         //work up to the target velocity over time
         if (Time.frameCount % velocityUpdateInterval == velocityUpdateSeed)
             velocity = (velocity + targetVelocity * turnSpeed * Time.deltaTime * velocityUpdateInterval).normalized * targetVelocity.magnitude;

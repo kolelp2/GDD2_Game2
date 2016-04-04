@@ -96,11 +96,10 @@ public class MapInfo : MonoBehaviour {
                 {
                     amIgood = true;
                     rotationDegrees += 90;
-                    if (row == 0 && col == 0) rotationDegrees = 90;
                     down = (newTileMT != null) ? newTileMT.GetTileablesList(MapTileDirections.Down, rotationDegrees) : new List<int>();
                     left = (newTileMT != null) ? newTileMT.GetTileablesList(MapTileDirections.Left, rotationDegrees) : new List<int>();
                     iterations++;
-                    if (iterations > 4)
+                    if (iterations > 8)
                     {
                         Destroy(newTile);
                         newTile = (GameObject)Instantiate(Resources.Load("MapTile" + numberOfTiles), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), Quaternion.identity);
@@ -110,8 +109,17 @@ public class MapInfo : MonoBehaviour {
                         break;
                         //throw new Exception();
                     }
-                    bool leftIsGood = (row == 0 || (wayPrevList.Count == 0 && left.Count == 0) || (wayPrevList.Contains(tileType) && left.Contains(tileIDs[row - 1, col])));
-                    bool downIsGood = (col == 0 || (prevList.Count == 0 && down.Count == 0) || (prevList.Contains(tileType) && down.Contains(tileIDs[row, col - 1])));
+                    float leftRot = (row > 0) ? spriteRotations[row - 1, col].eulerAngles.z : 0;
+                    float leftDiff = Math.Abs(rotationDegrees - leftRot);
+                    while (leftDiff > 180) leftDiff -= 360;
+                    float downRot = (col > 0) ? spriteRotations[row, col-1].eulerAngles.z : 0;
+                    float downDiff = Math.Abs(rotationDegrees - downRot);
+                    while (downDiff > 180) downDiff -= 360;
+                    bool downRotGood = downDiff >= -90 && downDiff <= 90;
+                    bool leftRotGood = leftDiff >= -90 && leftDiff <= 90;
+
+                    bool leftIsGood = (row == 0 || (wayPrevList.Count == 0 && left.Count == 0) || (wayPrevList.Contains(tileType) && left.Contains(tileIDs[row - 1, col]) && leftRotGood));
+                    bool downIsGood = (col == 0 || (prevList.Count == 0 && down.Count == 0) || (prevList.Contains(tileType) && down.Contains(tileIDs[row, col - 1]) && downRotGood));
                     bool upIsGood = false;
                     if (newTileMT!=null && row != 0 && col != tileY - 1 && mapTiles[row-1,col+1]!=null)
                     {
@@ -400,7 +408,7 @@ public class MapInfo : MonoBehaviour {
     public float GetSpeedModifierFromAltitudeAtPos(Vector2 pos)
     {
         float alt = GetAltitudeAtPos(pos);
-        float altmod = 1 - (Math.Abs(alt) / 6);
+        float altmod = (alt < -.5f) ? .5f : 1 - (Math.Abs(alt) / 6);
         return altmod;
     }
 
