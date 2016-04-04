@@ -53,6 +53,8 @@ public class MapInfo : MonoBehaviour {
         //get number of tiles in both directions
         int tileX = (int)Math.Ceiling(mapSize.x / tileDimension);
         int tileY = (int)Math.Ceiling(mapSize.y / tileDimension);
+        int[,] tileIDs = new int[tileX, tileY];
+        MapTile[,] mapTiles = new MapTile[tileX, tileY];
         Sprite[,] mapSprites = new Sprite[tileX, tileY];
         Quaternion[,] spriteRotations = new Quaternion[tileX, tileY];
         //iterate through the 2d tile grid
@@ -60,19 +62,84 @@ public class MapInfo : MonoBehaviour {
         {
             for(int col = 0; col < tileY; col++)
             {
-                //get a random rotation in 90deg intervals
-                int rotationDegrees = UnityEngine.Random.Range(0, 4) * 90;
-                Quaternion rotation = Quaternion.Euler(0, 0, rotationDegrees);
-                spriteRotations[row, col] = rotation;
-                //instantate the tile at the current position in the grid
-                //this means transforming from grid space to world space, accounting for the fact that the grid is bottom-left anchored and the tile objects are center-anchored, and correcting for the map's offset
-                int tileType = (row == 0 && col == 0) ? 8 : UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
+                //get the list off valid tile types for the current tile
+                //if we're past the first in the column, get the list in the up direction for the previous tile in the column
+                //check that the maptile isn't null, since not all our prefabs have scripts
+                List<int> prevList = (col > 0 && mapTiles[row, col - 1] != null) ? mapTiles[row, col - 1].GetTileablesList(MapTileDirections.Up, spriteRotations[row, col - 1].eulerAngles.z) : new List<int>();
+                //if we're past the first row, get the list in the right direction for the tile in this column but the previous row
+                List<int> wayPrevList = (row > 0 && mapTiles[row - 1, col] != null) ? mapTiles[row - 1, col].GetTileablesList(MapTileDirections.Right, spriteRotations[row - 1, col].eulerAngles.z) : new List<int>();
+                List<int> mergedList = MergeMapTileables(prevList, wayPrevList); //merge
+
+                GameObject newTile = null;
+                MapTile newTileMT;
+                int tileType;
+                int iterations = 0;
+
+
+                tileType = (mergedList.Count > 0) ? mergedList[(int)Math.Floor(UnityEngine.Random.value * (mergedList.Count))] : UnityEngine.Random.Range(1, numberOfTiles + blankTiles);
+                if (row == 0 && col == 0) tileType = 11;
                 if (tileType > numberOfTiles) //the blank tile may be considered more than once
                     tileType = numberOfTiles;
-                GameObject newTile = (GameObject)Instantiate(Resources.Load("MapTile" + tileType), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), rotation);
+                newTile = (GameObject)Instantiate(Resources.Load("MapTile" + tileType), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), Quaternion.identity);
+                newTileMT = (MapTile)newTile.GetComponent(typeof(MapTile)); //get the mapTile script from the new tile
+
+                tileIDs[row, col] = tileType;
+                mapTiles[row, col] = newTileMT; // save script object
+
+                //get a random rotation in 90deg intervals
+                int rotationDegrees = UnityEngine.Random.Range(0, 4) * 90 -90;
+                iterations = 0;
+                List<int> down;
+                List<int> left;
+                bool amIgood;
+                do
+                {
+                    amIgood = true;
+                    rotationDegrees += 90;
+                    if (row == 0 && col == 0) rotationDegrees = 90;
+                    down = (newTileMT != null) ? newTileMT.GetTileablesList(MapTileDirections.Down, rotationDegrees) : new List<int>();
+                    left = (newTileMT != null) ? newTileMT.GetTileablesList(MapTileDirections.Left, rotationDegrees) : new List<int>();
+                    iterations++;
+                    if (iterations > 4)
+                    {
+                        Destroy(newTile);
+                        newTile = (GameObject)Instantiate(Resources.Load("MapTile" + numberOfTiles), new Vector3(mapPos.x + row * tileDimension + tileDimension / 2, mapPos.y + col * tileDimension + tileDimension / 2, tileDepth), Quaternion.identity);
+                        newTileMT = null;
+                        mapTiles[row, col] = null;
+                        tileIDs[row, col] = numberOfTiles;
+                        break;
+                        //throw new Exception();
+                    }
+                    bool leftIsGood = (row == 0 || (wayPrevList.Count == 0 && left.Count == 0) || (wayPrevList.Contains(tileType) && left.Contains(tileIDs[row - 1, col])));
+                    bool downIsGood = (col == 0 || (prevList.Count == 0 && down.Count == 0) || (prevList.Contains(tileType) && down.Contains(tileIDs[row, col - 1])));
+                    bool upIsGood = false;
+                    if (newTileMT!=null && row != 0 && col != tileY - 1 && mapTiles[row-1,col+1]!=null)
+                    {
+                        List<int> coolGuyTileables = mapTiles[row - 1, col + 1].GetTileablesList(MapTileDirections.Right, spriteRotations[row - 1, col + 1].eulerAngles.z);
+                        List<int> myTilesables = newTileMT.GetTileablesList(MapTileDirections.Up, rotationDegrees);
+                        List<int> mergedTileables = MergeMapTileables(coolGuyTileables, myTilesables);
+                        if (coolGuyTileables.Count != 0 && myTilesables.Count != 0 && mergedList.Count == 0)
+                            upIsGood = false;
+                        else
+                            upIsGood = true;
+                    }
+                    else
+                        upIsGood = true;
+                    amIgood = newTileMT == null || (leftIsGood && downIsGood && upIsGood);
+
+                } while (!amIgood);
+
+                //if we have a valid rotation, save it, convert to a quat, and rotate us
+                Quaternion rotation = Quaternion.Euler(0, 0, rotationDegrees);
+                spriteRotations[row, col] = rotation;
+                newTile.transform.rotation = rotation;
+
+                
                 SpriteRenderer sr = (SpriteRenderer)newTile.GetComponent(typeof(SpriteRenderer));
+
                 //save the sprites - we'll use them to generate the altitude field
                 mapSprites[row, col] = sr.sprite;
+
                 //scale the tiles so they conform to our tile dimension
                 float ppu = sr.sprite.rect.width / sr.sprite.bounds.size.x; //this is pixels per unit
                 float scale = tileDimension / (sr.sprite.rect.width / ppu); //desired in unity units over current in unity units - with current in unity units being current pixel width over pixels per unit
@@ -160,7 +227,7 @@ public class MapInfo : MonoBehaviour {
         //pass the list of node locations to the GOT so it can generate stuff
         ((GOTracker)gameObject.GetComponent(typeof(GOTracker))).GenerateObjs(nodeLocations);
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
         //if the current day (running time divided by day length floored) doesn't equal the recorded current day,
@@ -419,6 +486,23 @@ public class MapInfo : MonoBehaviour {
         float z = pos.z;
         Vector2 point = GetNearestPointOnMap(pos);
         return new Vector3(point.x, point.y, z);
+    }
+
+
+    List<int> MergeMapTileables(List<int> t1, List<int> t2)
+    {
+        if (t1.Count == 0)
+            return t2;
+        else if (t2.Count == 0)
+            return t1;
+        else
+        {
+            List<int> returnList = new List<int>();
+            foreach (int i in t1)
+                if (t2.Contains(i))
+                    returnList.Add(i);
+            return returnList;
+        }
     }
 }
 
